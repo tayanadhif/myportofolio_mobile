@@ -1,7 +1,7 @@
 # myportofolio_mobile
 
-Nama : Nadhif Aydin Adinandra
-NPM : 2506537745
+Nama : Nadhif Aydin Adinandra<br>
+NPM : 2506537745<br>
 Kelas : PBP E
 
 A new Flutter project.
