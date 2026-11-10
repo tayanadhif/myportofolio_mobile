@@ -8,9 +8,9 @@ class MyHomePage extends StatelessWidget {
   static const String kelas = 'PBP E';
 
   static const List<ItemHomepage> items = [
-    ItemHomepage('Lihat Proyek', Icons.folder),
-    ItemHomepage('Tambah Proyek', Icons.add_circle),
-    ItemHomepage('Logout', Icons.logout),
+    ItemHomepage('Lihat Proyek', Icons.folder, Colors.blue),
+    ItemHomepage('Tambah Proyek', Icons.add_circle, Colors.green),
+    ItemHomepage('Logout', Icons.logout, Colors.deepOrange),
   ];
 
   @override
@@ -19,10 +19,7 @@ class MyHomePage extends StatelessWidget {
       appBar: AppBar(
         title: const Text(
           'MyPortfolio',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         backgroundColor: Theme.of(context).colorScheme.primary,
       ),
@@ -100,8 +97,9 @@ class InfoCard extends StatelessWidget {
 class ItemHomepage {
   final String name;
   final IconData icon;
+  final Color backgroundColor;
 
-  const ItemHomepage(this.name, this.icon);
+  const ItemHomepage(this.name, this.icon, this.backgroundColor);
 }
 
 class ItemCard extends StatelessWidget {
@@ -112,7 +110,7 @@ class ItemCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Theme.of(context).colorScheme.secondary,
+      color: item.backgroundColor,
       borderRadius: BorderRadius.circular(12),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
@@ -120,7 +118,9 @@ class ItemCard extends StatelessWidget {
           ScaffoldMessenger.of(context)
             ..hideCurrentSnackBar()
             ..showSnackBar(
-              SnackBar(content: Text('Kamu telah menekan tombol ${item.name}!')),
+              SnackBar(
+                content: Text('Kamu telah menekan tombol ${item.name}!'),
+              ),
             );
         },
         child: Container(
