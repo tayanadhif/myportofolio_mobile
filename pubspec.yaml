@@ -59,6 +59,7 @@ flutter:
 
   assets:
     - web/icons/concert.png
+    - assets/images/nadhif.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:
