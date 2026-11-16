@@ -1,4 +1,8 @@
+import 'dart:async';
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class MyHomePage extends StatefulWidget {
   final bool isDarkMode;
@@ -19,24 +23,58 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  final TextEditingController _searchController = TextEditingController();
-  final List<_Project> _projects = [
-    _Project('Portfolio Website', 'Website portofolio untuk menampilkan profil dan karya.', Icons.language),
-    _Project('Game Development', 'Eksperimen membuat game dan mekanika interaktif.', Icons.sports_esports),
-    _Project('Gaming Content', 'Video gameplay dan konten seputar game.', Icons.smart_display),
-    _Project('Podcast', 'Berbagi cerita dan sudut pandang lewat obrolan.', Icons.mic),
-    _Project('Math Teaching', 'Belajar matematika dengan penjelasan yang mudah dipahami.', Icons.calculate),
-  ];
-  String _query = '';
+  static const String _projectsKey = 'saved_projects';
 
-  List<_Project> get _visibleProjects => _projects
-      .where((project) => project.title.toLowerCase().contains(_query.toLowerCase()))
-      .toList();
+  final List<_Project> _defaultProjects = const [
+    _Project('Portfolio Website', 'Website portofolio untuk menampilkan profil dan karya.', 'language'),
+    _Project('Game Development', 'Eksperimen membuat game dan mekanika interaktif.', 'sports_esports'),
+    _Project('Gaming Content', 'Video gameplay dan konten seputar game.', 'smart_display'),
+    _Project('Podcast', 'Berbagi cerita dan sudut pandang lewat obrolan.', 'mic'),
+    _Project('Math Teaching', 'Belajar matematika dengan penjelasan yang mudah dipahami.', 'calculate'),
+  ];
+
+  List<_Project> _projects = [];
 
   @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
+  void initState() {
+    super.initState();
+    _loadProjects();
+  }
+
+  Future<void> _loadProjects() async {
+    final prefs = await SharedPreferences.getInstance();
+    final values = prefs.getStringList(_projectsKey);
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      if (values == null || values.isEmpty) {
+        _projects = List<_Project>.from(_defaultProjects);
+        return;
+      }
+
+      _projects = values
+          .map((value) => _Project.fromJson(jsonDecode(value) as Map<String, dynamic>))
+          .toList();
+    });
+  }
+
+  Future<void> _saveProjects() async {
+    final prefs = await SharedPreferences.getInstance();
+    final values = _projects
+        .map((project) => jsonEncode(project.toJson()))
+        .toList();
+    await prefs.setStringList(_projectsKey, values);
+  }
+
+  bool _isDuplicateProjectTitle(String title) {
+    final normalized = title.trim();
+    if (normalized.isEmpty) {
+      return false;
+    }
+    return _projects.any((project) => project.title.trim().toLowerCase() == normalized.toLowerCase());
   }
 
   void _showProjects() {
@@ -44,77 +82,15 @@ class _MyHomePageState extends State<MyHomePage> {
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
-      builder: (sheetContext) => StatefulBuilder(
-        builder: (context, setSheetState) {
-          final projects = _visibleProjects;
-          return SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Proyek saya', style: Theme.of(context).textTheme.headlineSmall),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: _searchController,
-                    onChanged: (value) => setSheetState(() => _query = value.trim()),
-                    decoration: InputDecoration(
-                      hintText: 'Cari proyek...',
-                      prefixIcon: const Icon(Icons.search),
-                      suffixIcon: _query.isEmpty
-                          ? null
-                          : IconButton(
-                              tooltip: 'Hapus pencarian',
-                              onPressed: () {
-                                _searchController.clear();
-                                setSheetState(() => _query = '');
-                              },
-                              icon: const Icon(Icons.clear),
-                            ),
-                      border: const OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Flexible(
-                    child: projects.isEmpty
-                        ? const Center(child: Padding(
-                            padding: EdgeInsets.all(24),
-                            child: Text('Proyek tidak ditemukan.'),
-                          ))
-                        : ListView.builder(
-                            shrinkWrap: true,
-                            itemCount: projects.length,
-                            itemBuilder: (context, index) {
-                              final project = projects[index];
-                              return ListTile(
-                                leading: CircleAvatar(child: Icon(project.icon)),
-                                title: Text(project.title),
-                                subtitle: Text(project.description),
-                                isThreeLine: true,
-                                onTap: () {
-                                  Navigator.pop(sheetContext);
-                                  _showProjectDetails(project);
-                                },
-                              );
-                            },
-                          ),
-                  ),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton.icon(
-                      onPressed: () {
-                        Navigator.pop(sheetContext);
-                        _showAddProjectDialog();
-                      },
-                      icon: const Icon(Icons.add),
-                      label: const Text('Tambah proyek'),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
+      builder: (sheetContext) => _ProjectSheet(
+        projects: _projects,
+        onProjectTap: (project) {
+          Navigator.pop(sheetContext);
+          _showProjectDetails(project);
+        },
+        onAddProjectTap: () {
+          Navigator.pop(sheetContext);
+          _showAddProjectDialog();
         },
       ),
     );
@@ -166,7 +142,11 @@ class _MyHomePageState extends State<MyHomePage> {
               if (formKey.currentState!.validate()) {
                 Navigator.pop(
                   context,
-                  _Project(titleController.text.trim(), descriptionController.text.trim(), Icons.lightbulb_outline),
+                  _Project(
+                    titleController.text.trim(),
+                    descriptionController.text.trim(),
+                    'lightbulb_outline',
+                  ),
                 );
               }
             },
@@ -178,8 +158,19 @@ class _MyHomePageState extends State<MyHomePage> {
     titleController.dispose();
     descriptionController.dispose();
     if (project != null && mounted) {
+      final title = project.title.trim();
+      if (_isDuplicateProjectTitle(title)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Nama proyek sudah ada, pilih judul lain.')),
+        );
+        return;
+      }
+
       setState(() => _projects.insert(0, project));
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${project.title} ditambahkan.')));
+      unawaited(_saveProjects());
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${project.title} ditambahkan.')),
+      );
     }
   }
 
@@ -446,12 +437,149 @@ class _PortfolioHero extends StatelessWidget {
   }
 }
 
+class _ProjectSheet extends StatefulWidget {
+  final List<_Project> projects;
+  final ValueChanged<_Project> onProjectTap;
+  final VoidCallback onAddProjectTap;
+
+  const _ProjectSheet({
+    required this.projects,
+    required this.onProjectTap,
+    required this.onAddProjectTap,
+  });
+
+  @override
+  State<_ProjectSheet> createState() => _ProjectSheetState();
+}
+
+class _ProjectSheetState extends State<_ProjectSheet> {
+  final TextEditingController _searchController = TextEditingController();
+  String _query = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  List<_Project> get _visibleProjects {
+    final query = _query.trim().toLowerCase();
+    if (query.isEmpty) {
+      return widget.projects;
+    }
+    return widget.projects
+        .where((project) => project.title.toLowerCase().contains(query))
+        .toList();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final visibleProjects = _visibleProjects;
+
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Proyek saya', style: Theme.of(context).textTheme.headlineSmall),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _searchController,
+              onChanged: (value) => setState(() => _query = value),
+              decoration: InputDecoration(
+                hintText: 'Cari proyek...',
+                prefixIcon: const Icon(Icons.search),
+                suffixIcon: _query.trim().isEmpty
+                    ? null
+                    : IconButton(
+                        tooltip: 'Hapus pencarian',
+                        onPressed: () {
+                          _searchController.clear();
+                          setState(() => _query = '');
+                        },
+                        icon: const Icon(Icons.clear),
+                      ),
+                border: const OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Flexible(
+              child: visibleProjects.isEmpty
+                  ? const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(24),
+                        child: Text('Proyek tidak ditemukan.'),
+                      ),
+                    )
+                  : ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: visibleProjects.length,
+                      itemBuilder: (context, index) {
+                        final project = visibleProjects[index];
+                        return ListTile(
+                          leading: CircleAvatar(child: Icon(project.icon)),
+                          title: Text(project.title),
+                          subtitle: Text(project.description),
+                          isThreeLine: true,
+                          onTap: () => widget.onProjectTap(project),
+                        );
+                      },
+                    ),
+            ),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                onPressed: widget.onAddProjectTap,
+                icon: const Icon(Icons.add),
+                label: const Text('Tambah proyek'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _Project {
   final String title;
   final String description;
-  final IconData icon;
+  final String iconName;
 
-  const _Project(this.title, this.description, this.icon);
+  const _Project(this.title, this.description, [this.iconName = 'lightbulb_outline']);
+
+  IconData get icon {
+    const map = <String, IconData>{
+      'language': Icons.language,
+      'sports_esports': Icons.sports_esports,
+      'smart_display': Icons.smart_display,
+      'mic': Icons.mic,
+      'calculate': Icons.calculate,
+      'lightbulb_outline': Icons.lightbulb_outline,
+      'code': Icons.code,
+      'rocket_launch': Icons.rocket_launch,
+      'design_services': Icons.design_services,
+      'book': Icons.book,
+      'terminal': Icons.terminal,
+    };
+    return map[iconName] ?? Icons.lightbulb_outline;
+  }
+
+  Map<String, String> toJson() => {
+        'title': title,
+        'description': description,
+        'icon': iconName,
+      };
+
+  factory _Project.fromJson(Map<String, dynamic> json) {
+    return _Project(
+      json['title'] as String? ?? 'Untitled Project',
+      json['description'] as String? ?? 'No description',
+      json['icon'] as String? ?? 'lightbulb_outline',
+    );
+  }
 }
 
 class _ActionCard extends StatelessWidget {
@@ -463,14 +591,24 @@ class _ActionCard extends StatelessWidget {
   const _ActionCard({required this.label, required this.icon, required this.color, required this.onTap});
 
   @override
-  Widget build(BuildContext context) => Material(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(16),
+  Widget build(BuildContext context) => Container(
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: color.withValues(alpha: 0.18)),
+          boxShadow: [
+            BoxShadow(
+              color: color.withValues(alpha: 0.08),
+              blurRadius: 10,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
         child: InkWell(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(18),
           onTap: onTap,
           child: SizedBox(
-            height: 68,
+            height: 72,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -520,11 +658,11 @@ class InfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Card(
-        elevation: 0,
+        elevation: 0.5,
         color: Theme.of(context).colorScheme.surfaceContainerLow,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 13),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 14),
           child: Column(
             children: [
               Text(
@@ -532,11 +670,11 @@ class InfoCard extends StatelessWidget {
                 style: TextStyle(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                   fontSize: 9,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w800,
                   letterSpacing: 0.8,
                 ),
               ),
-              const SizedBox(height: 7),
+              const SizedBox(height: 8),
               FittedBox(
                 fit: BoxFit.scaleDown,
                 child: Text(content, maxLines: 1, style: const TextStyle(fontWeight: FontWeight.w700)),
