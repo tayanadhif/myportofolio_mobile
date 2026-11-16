@@ -3,6 +3,8 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'add_project_page.dart';
+import 'project.dart';
 
 class MyHomePage extends StatefulWidget {
   final bool isDarkMode;
@@ -25,15 +27,15 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   static const String _projectsKey = 'saved_projects';
 
-  final List<_Project> _defaultProjects = const [
-    _Project('Portfolio Website', 'Website portofolio untuk menampilkan profil dan karya.', 'language'),
-    _Project('Game Development', 'Eksperimen membuat game dan mekanika interaktif.', 'sports_esports'),
-    _Project('Gaming Content', 'Video gameplay dan konten seputar game.', 'smart_display'),
-    _Project('Podcast', 'Berbagi cerita dan sudut pandang lewat obrolan.', 'mic'),
-    _Project('Math Teaching', 'Belajar matematika dengan penjelasan yang mudah dipahami.', 'calculate'),
+  final List<Project> _defaultProjects = const [
+    Project('Portfolio Website', 'Website portofolio untuk menampilkan profil dan karya.', category: 'Website', technologies: ['Flutter', 'Dart'], iconName: 'language'),
+    Project('Game Development', 'Eksperimen membuat game dan mekanika interaktif.', category: 'Game', technologies: ['Unity', 'C#'], iconName: 'sports_esports'),
+    Project('Gaming Content', 'Video gameplay dan konten seputar game.', category: 'Konten', technologies: ['OBS Studio'], iconName: 'smart_display'),
+    Project('Podcast', 'Berbagi cerita dan sudut pandang lewat obrolan.', category: 'Konten', technologies: ['Audacity'], iconName: 'mic'),
+    Project('Math Teaching', 'Belajar matematika dengan penjelasan yang mudah dipahami.', category: 'Edukasi', technologies: ['Canva'], iconName: 'calculate'),
   ];
 
-  List<_Project> _projects = [];
+  List<Project> _projects = [];
 
   @override
   void initState() {
@@ -51,12 +53,12 @@ class _MyHomePageState extends State<MyHomePage> {
 
     setState(() {
       if (values == null || values.isEmpty) {
-        _projects = List<_Project>.from(_defaultProjects);
+        _projects = List<Project>.from(_defaultProjects);
         return;
       }
 
       _projects = values
-          .map((value) => _Project.fromJson(jsonDecode(value) as Map<String, dynamic>))
+          .map((value) => Project.fromJson(jsonDecode(value) as Map<String, dynamic>))
           .toList();
     });
   }
@@ -96,67 +98,37 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  void _showProjectDetails(_Project project) {
+  void _showProjectDetails(Project project) {
     showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
         icon: Icon(project.icon, size: 34),
         title: Text(project.title),
-        content: Text(project.description),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(project.description),
+            const SizedBox(height: 12),
+            Text('Kategori: ${project.category}'),
+            const SizedBox(height: 4),
+            Text('Teknologi: ${project.technologies.isEmpty ? '-' : project.technologies.join(', ')}'),
+            if (project.link.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              SelectableText('Tautan: ${project.link}'),
+            ],
+          ],
+        ),
         actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Tutup'))],
       ),
     );
   }
 
   Future<void> _showAddProjectDialog() async {
-    final titleController = TextEditingController();
-    final descriptionController = TextEditingController();
-    final formKey = GlobalKey<FormState>();
-    final project = await showDialog<_Project>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Tambah proyek'),
-        content: Form(
-          key: formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextFormField(
-                controller: titleController,
-                autofocus: true,
-                decoration: const InputDecoration(labelText: 'Nama proyek'),
-                validator: (value) => value == null || value.trim().isEmpty ? 'Isi nama proyek.' : null,
-              ),
-              TextFormField(
-                controller: descriptionController,
-                decoration: const InputDecoration(labelText: 'Deskripsi'),
-                validator: (value) => value == null || value.trim().isEmpty ? 'Isi deskripsi proyek.' : null,
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Batal')),
-          FilledButton(
-            onPressed: () {
-              if (formKey.currentState!.validate()) {
-                Navigator.pop(
-                  context,
-                  _Project(
-                    titleController.text.trim(),
-                    descriptionController.text.trim(),
-                    'lightbulb_outline',
-                  ),
-                );
-              }
-            },
-            child: const Text('Simpan'),
-          ),
-        ],
-      ),
+    final project = await Navigator.push<Project>(
+      context,
+      MaterialPageRoute(builder: (_) => const AddProjectPage()),
     );
-    titleController.dispose();
-    descriptionController.dispose();
     if (project != null && mounted) {
       final title = project.title.trim();
       if (_isDuplicateProjectTitle(title)) {
@@ -195,6 +167,43 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
+      drawer: Drawer(
+        child: SafeArea(
+          child: Column(
+            children: [
+              UserAccountsDrawerHeader(
+                accountName: const Text(MyHomePage.nama),
+                accountEmail: const Text('Ilmu Komputer · PBP E'),
+                currentAccountPicture: const CircleAvatar(child: Icon(Icons.person_outline, size: 34)),
+                decoration: BoxDecoration(color: colorScheme.primary),
+              ),
+              ListTile(
+                leading: const Icon(Icons.home_outlined),
+                title: const Text('Beranda'),
+                selected: true,
+                onTap: () => Navigator.pop(context),
+              ),
+              ListTile(
+                leading: const Icon(Icons.work_outline),
+                title: const Text('Lihat proyek'),
+                onTap: () { Navigator.pop(context); _showProjects(); },
+              ),
+              ListTile(
+                leading: const Icon(Icons.add_circle_outline),
+                title: const Text('Tambah proyek'),
+                onTap: () { Navigator.pop(context); _showAddProjectDialog(); },
+              ),
+              const Spacer(),
+              const Divider(),
+              ListTile(
+                leading: Icon(widget.isDarkMode ? Icons.light_mode : Icons.dark_mode),
+                title: Text(widget.isDarkMode ? 'Mode terang' : 'Mode gelap'),
+                onTap: () { Navigator.pop(context); widget.onThemeToggle(); },
+              ),
+            ],
+          ),
+        ),
+      ),
       appBar: AppBar(
         title: Row(
           children: [
@@ -438,8 +447,8 @@ class _PortfolioHero extends StatelessWidget {
 }
 
 class _ProjectSheet extends StatefulWidget {
-  final List<_Project> projects;
-  final ValueChanged<_Project> onProjectTap;
+  final List<Project> projects;
+  final ValueChanged<Project> onProjectTap;
   final VoidCallback onAddProjectTap;
 
   const _ProjectSheet({
@@ -462,7 +471,7 @@ class _ProjectSheetState extends State<_ProjectSheet> {
     super.dispose();
   }
 
-  List<_Project> get _visibleProjects {
+  List<Project> get _visibleProjects {
     final query = _query.trim().toLowerCase();
     if (query.isEmpty) {
       return widget.projects;
@@ -521,7 +530,7 @@ class _ProjectSheetState extends State<_ProjectSheet> {
                         return ListTile(
                           leading: CircleAvatar(child: Icon(project.icon)),
                           title: Text(project.title),
-                          subtitle: Text(project.description),
+                          subtitle: Text('${project.category} · ${project.technologies.join(', ')}\n${project.description}'),
                           isThreeLine: true,
                           onTap: () => widget.onProjectTap(project),
                         );
@@ -539,45 +548,6 @@ class _ProjectSheetState extends State<_ProjectSheet> {
           ],
         ),
       ),
-    );
-  }
-}
-
-class _Project {
-  final String title;
-  final String description;
-  final String iconName;
-
-  const _Project(this.title, this.description, [this.iconName = 'lightbulb_outline']);
-
-  IconData get icon {
-    const map = <String, IconData>{
-      'language': Icons.language,
-      'sports_esports': Icons.sports_esports,
-      'smart_display': Icons.smart_display,
-      'mic': Icons.mic,
-      'calculate': Icons.calculate,
-      'lightbulb_outline': Icons.lightbulb_outline,
-      'code': Icons.code,
-      'rocket_launch': Icons.rocket_launch,
-      'design_services': Icons.design_services,
-      'book': Icons.book,
-      'terminal': Icons.terminal,
-    };
-    return map[iconName] ?? Icons.lightbulb_outline;
-  }
-
-  Map<String, String> toJson() => {
-        'title': title,
-        'description': description,
-        'icon': iconName,
-      };
-
-  factory _Project.fromJson(Map<String, dynamic> json) {
-    return _Project(
-      json['title'] as String? ?? 'Untitled Project',
-      json['description'] as String? ?? 'No description',
-      json['icon'] as String? ?? 'lightbulb_outline',
     );
   }
 }

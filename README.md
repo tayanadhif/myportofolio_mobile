@@ -99,3 +99,13 @@ Saya menggunakan ChatGPT sebagai alat bantu untuk memperoleh panduan dan langkah
 
 **ChatGPT history conversation:**
 - [Percakapan Tugas 7](https://chatgpt.com/share/6af335f7-93d4-83ec-b2ab-4db9846f2165)
+
+### Tugas 9
+
+Implementasi Tutorial 9 menambahkan navigasi dan input proyek pada aplikasi portofolio:
+
+- **Drawer navigasi** menyediakan akses ke Beranda, daftar proyek, formulir tambah proyek, dan pengaturan tema.
+- **Form tambah proyek** dibuka sebagai halaman tersendiri. Form memuat nama, deskripsi, kategori proyek, teknologi yang digunakan, dan tautan proyek; input divalidasi dan data dikembalikan ke halaman utama melalui `Navigator.pop`.
+- **Menampilkan data proyek** tetap tersedia melalui daftar proyek dan dialog detail. Proyek baru disimpan dengan `SharedPreferences` agar tetap ada setelah aplikasi dibuka kembali.
+- **Navigasi tombol** pada halaman utama dan drawer menuju daftar maupun formulir proyek.
+- **Refactoring** memisahkan model `Project` ke `lib/project.dart` dan halaman formulir ke `lib/add_project_page.dart`; halaman portofolio tetap di `lib/menu.dart`.
