@@ -93,9 +93,40 @@ samples, guidance on mobile development, and a full API reference.
 
    *Full restart* menghentikan lalu menjalankan kembali aplikasi, termasuk bagian native/platform. Ini diperlukan untuk perubahan kode native seperti Kotlin/Java atau Swift/Objective-C, konfigurasi platform, dan perubahan plugin yang membutuhkan proses build atau registrasi native baru. Jadi, hot reload bukan pengganti restart untuk semua jenis perubahan; pilih restart sesuai bagian aplikasi yang berubah.
 
+### Tugas 8
+
+1. **Jelaskan perbedaan antara `Navigator.push()`, `Navigator.pushReplacement()`, dan `Navigator.pop()`. Metode apa yang digunakan untuk membuka formulir dari kartu aksi? Jelaskan juga bagaimana opsi **Home** di drawer membawa pengguna kembali ke halaman utama.**
+
+   `Navigator.push()` menambahkan rute baru di atas rute saat ini sehingga tombol kembali dapat kembali ke halaman sebelumnya. `Navigator.pushReplacement()` mengganti rute saat ini dengan rute baru, sehingga rute lama tidak lagi tersisa dalam stack. `Navigator.pop()` menghapus rute teratas dan mengembalikan pengguna ke rute sebelumnya.
+
+   Formulir dibuka dari kartu aksi **Add project** dengan `Navigator.push<Project>()` dan `MaterialPageRoute`; dengan begitu, pengguna dapat kembali ke halaman utama melalui tombol kembali bawaan atau dengan menutup rute formulir. Pada drawer formulir, opsi **Home** menutup drawer lalu memanggil `Navigator.popUntil(context, (route) => route.isFirst)` untuk membuang rute formulir dan rute lain di atas halaman pertama.
+
+2. **Bagaimana susunan `Scaffold`, `AppBar`, dan `Drawer` membantu menjaga struktur halaman tetap konsisten? Berikan satu contoh penggunaan warna tema portofolio di lebih dari satu halaman.**
+
+   `Scaffold` menyediakan kerangka halaman yang konsisten, `AppBar` menampilkan judul serta aksi utama, dan `Drawer` menyediakan navigasi samping yang dapat dipakai lintas halaman. Struktur ini membuat halaman utama dan halaman formulir memiliki pemisahan navigasi, area konten, dan app bar yang seragam.
+
+   Contohnya, warna utama portofolio `D95D39` dipakai sebagai seed `ColorScheme` pada tema aplikasi di `lib/main.dart`, sehingga warna utama tersebut dapat dipakai oleh tombol, header drawer, dan elemen interaktif pada halaman utama maupun halaman formulir.
+
+3. **Mengapa tata letak tersebut dipilih untuk formulir? Jelaskan peran widget pengatur jarak dan widget penggulir ketika ruang layar terbatas.**
+
+   Formulir menggunakan `Column` untuk memisahkan tombol **Save project** dari area input, lalu area input dibungkus `Expanded` dan `ListView` agar dapat digulir. `SafeArea` mencegah konten tertutup notifikasi sistem atau tepi perangkat, sedangkan `resizeToAvoidBottomInset: true` memberi ruang ketika papan ketik muncul.
+
+   `SizedBox` dan `Padding` memberi jarak antar-kolom serta ruang tepi agar input tidak terasa saling menempel. `ListView` memungkinkan seluruh formulir digulir pada layar kecil, sementara tombol Simpan tetap berada di bagian bawah dan mudah dijangkau.
+
+4. **Apa peran `GlobalKey<FormState>`, `validator`, dan `validate()` saat tombol **Simpan** ditekan? Berikan satu contoh nilai yang ditolak oleh validasi dan jelaskan mengapa memilih jenis input atau papan ketik saja belum cukup.**
+
+   `_formKey` bertipe `GlobalKey<FormState>` menghubungkan widget `Form` dengan seluruh `FormField` di dalamnya. Setiap `validator` menerima nilai isian dan mengembalikan pesan kesalahan jika nilai tidak memenuhi aturan. Saat tombol **Save project** ditekan, `_formKey.currentState!.validate()` menjalankan semua validator dan menampilkan pesan kesalahan pada kolom yang bermasalah.
+
+   Misalnya, isian `"   "` pada `Project name` ditolak meskipun tidak benar-benar kosong karena `validator` memanggil `trim()` lalu memeriksa apakah hasilnya kosong. Pemilihan `TextFormField` atau papan ketik URL hanya mengatur cara pengguna memasukkan atau mengetik nilai; pilihan tersebut tidak menjamin bahwa nilai yang dikirim valid. Oleh sebab itu, validasi tetap diperlukan untuk memeriksa spasi kosong, panjang teks, kategori, dan format URL.
+
 ### AI Disclosure
 
 Saya menggunakan ChatGPT sebagai alat bantu untuk memperoleh panduan dan langkah-langkah dalam mengerjakan proyek, memverifikasi pemahaman mengenai konsep Flutter, serta mencari solusi saat menemui kendala selama pengembangan. Saya meninjau dan menyesuaikan saran yang diberikan, kemudian menguji aplikasi untuk memastikan perubahan sesuai dengan kebutuhan proyek.
 
+Pada Tugas 7, AI digunakan untuk membantu memahami widget tree, `StatelessWidget` dan `StatefulWidget`, `BuildContext`, serta konsep hot reload dan hot restart, sekaligus membantu menyusun jawaban reflektif Tugas 7. Seluruh hasil ditinjau dan disesuaikan dengan implementasi proyek sebelum digunakan.
+
+Pada Tugas 8, AI digunakan untuk membantu menyusun navigasi dengan `Navigator`, menjaga konsistensi `Scaffold`/`Drawer`, merancang validasi formulir dan dialog ringkasan, serta menyusun jawaban reflektif dalam README. Seluruh hasil ditinjau, disesuaikan, dan diuji pada proyek sebelum digunakan.
+
 **ChatGPT history conversation:**
 - [Percakapan Tugas 7](https://chatgpt.com/share/6af335f7-93d4-83ec-b2ab-4db9846f2165)
+- [Percakapan Tugas 8](https://chatgpt.com/share/6affa934-8bb8-83ec-9aff-afb6260e53a9)
