@@ -1,21 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:myportofolio_mobile/project.dart';
 import 'package:myportofolio_mobile/screens/add_project_page.dart';
 
 void main() {
   testWidgets('validates required fields and optional project URL', (
     WidgetTester tester,
   ) async {
-    Project? result;
-
     await tester.pumpWidget(
       MaterialApp(
         home: Builder(
           builder: (context) => Scaffold(
             body: TextButton(
               onPressed: () async {
-                result = await Navigator.push<Project>(
+                await Navigator.push<void>(
                   context,
                   MaterialPageRoute(builder: (_) => const AddProjectPage()),
                 );
@@ -73,9 +70,15 @@ void main() {
     await tester.tap(find.text('Save project'));
     await tester.pumpAndSettle();
 
-    expect(result?.title, 'Test Project');
-    expect(result?.description, 'Test description');
-    expect(result?.technologies, isEmpty);
-    expect(result?.link, isEmpty);
+    expect(find.text('Project Summary'), findsOneWidget);
+    expect(find.text('Project name: Test Project'), findsOneWidget);
+    expect(find.text('Description: Test description'), findsOneWidget);
+    expect(find.text('Category: Other'), findsOneWidget);
+    expect(find.text('Technologies: -'), findsOneWidget);
+    expect(find.text('Project link: -'), findsOneWidget);
+
+    await tester.tap(find.text('Close'));
+    await tester.pumpAndSettle();
+    expect(find.text('Add Project'), findsOneWidget);
   });
 }

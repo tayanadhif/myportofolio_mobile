@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../project.dart';
 import '../portfolio_drawer.dart';
 
 class AddProjectPage extends StatefulWidget {
@@ -34,27 +33,45 @@ class _AddProjectPageState extends State<AddProjectPage> {
     super.dispose();
   }
 
-  void _submit() {
+  Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
-    Navigator.pop(
-      context,
-      Project(
-        _titleController.text.trim(),
-        _descriptionController.text.trim(),
-        category: _category,
-        technologies: _technologiesController.text
-            .split(',')
-            .map((technology) => technology.trim())
-            .where((technology) => technology.isNotEmpty)
-            .toList(),
-        link: _linkController.text.trim(),
-        iconName: switch (_category) {
-          'Website' => 'language',
-          'Mobile app' => 'phone_android',
-          'Game' => 'sports_esports',
-          'Design' => 'design_services',
-          _ => 'lightbulb_outline',
-        },
+
+    final technologies = _technologiesController.text
+        .split(',')
+        .map((technology) => technology.trim())
+        .where((technology) => technology.isNotEmpty)
+        .join(', ');
+    final link = _linkController.text.trim();
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Project Summary'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Project name: ${_titleController.text.trim()}'),
+              const SizedBox(height: 8),
+              Text('Description: ${_descriptionController.text.trim()}'),
+              const SizedBox(height: 8),
+              Text('Category: $_category'),
+              const SizedBox(height: 8),
+              Text(
+                'Technologies: ${technologies.isEmpty ? '-' : technologies}',
+              ),
+              const SizedBox(height: 8),
+              Text('Project link: ${link.isEmpty ? '-' : link}'),
+            ],
+          ),
+        ),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Close'),
+          ),
+        ],
       ),
     );
   }
