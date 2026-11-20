@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:myportofolio_mobile/menu.dart';
+import 'package:myportofolio_mobile/screens/google_login_page.dart';
 
 void main() {
   runApp(const MyApp());
@@ -14,9 +15,18 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   bool _isDarkMode = false;
+  bool _isLoggedIn = false;
 
   void _toggleTheme() {
     setState(() => _isDarkMode = !_isDarkMode);
+  }
+
+  void _login() {
+    setState(() => _isLoggedIn = true);
+  }
+
+  void _logout() {
+    setState(() => _isLoggedIn = false);
   }
 
   @override
@@ -36,7 +46,17 @@ class _MyAppState extends State<MyApp> {
         useMaterial3: true,
       ),
       themeMode: _isDarkMode ? ThemeMode.dark : ThemeMode.light,
-      home: MyHomePage(isDarkMode: _isDarkMode, onThemeToggle: _toggleTheme),
+      home: _isLoggedIn
+          ? MyHomePage(
+              isDarkMode: _isDarkMode,
+              onThemeToggle: _toggleTheme,
+              onLogout: _logout,
+            )
+          : GoogleLoginPage(
+              isDarkMode: _isDarkMode,
+              onThemeToggle: _toggleTheme,
+              onLoginSuccess: _login,
+            ),
     );
   }
 }

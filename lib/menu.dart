@@ -11,11 +11,13 @@ import 'screens/add_project_page.dart';
 class MyHomePage extends StatefulWidget {
   final bool isDarkMode;
   final VoidCallback onThemeToggle;
+  final VoidCallback onLogout;
 
   const MyHomePage({
     super.key,
     required this.isDarkMode,
     required this.onThemeToggle,
+    required this.onLogout,
   });
 
   static const String npm = '2506537745';
@@ -221,9 +223,7 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
     );
     if (confirmed == true && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Portfolio session closed.')),
-      );
+      widget.onLogout();
     }
   }
 
