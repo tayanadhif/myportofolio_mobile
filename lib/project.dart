@@ -36,20 +36,21 @@ class Project {
   }
 
   Map<String, dynamic> toJson() => {
-        'title': title,
-        'description': description,
-        'category': category,
-        'technologies': technologies,
-        'link': link,
-        'icon': iconName,
-      };
+    'title': title,
+    'description': description,
+    'category': category,
+    'technologies': technologies,
+    'link': link,
+    'icon': iconName,
+  };
 
   factory Project.fromJson(Map<String, dynamic> json) => Project(
-        json['title'] as String? ?? 'Untitled Project',
-        json['description'] as String? ?? 'No description',
-        category: json['category'] as String? ?? 'Lainnya',
-        technologies: (json['technologies'] as List<dynamic>?)?.cast<String>() ?? const [],
-        link: json['link'] as String? ?? '',
-        iconName: json['icon'] as String? ?? 'lightbulb_outline',
-      );
+    json['title'] as String? ?? 'Untitled Project',
+    json['description'] as String? ?? 'No description',
+    category: json['category'] as String? ?? 'Lainnya',
+    technologies:
+        (json['technologies'] as List<dynamic>?)?.cast<String>() ?? const [],
+    link: json['link'] as String? ?? '',
+    iconName: json['icon'] as String? ?? 'lightbulb_outline',
+  );
 }

@@ -20,9 +20,9 @@ void main() {
     expect(find.text('Nadhif Aydin\nAdinandra'), findsOneWidget);
     expect(find.text(MyHomePage.npm), findsOneWidget);
 
-    await tester.tap(find.text('Jelajahi karya'));
+    await tester.tap(find.text('Explore work'));
     await tester.pumpAndSettle();
-    expect(find.text('Proyek saya'), findsOneWidget);
+    expect(find.text('My projects'), findsOneWidget);
     expect(find.text('Portfolio Website'), findsOneWidget);
   });
 }

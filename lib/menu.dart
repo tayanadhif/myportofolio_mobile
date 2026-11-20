@@ -3,8 +3,9 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'add_project_page.dart';
+
 import 'project.dart';
+import 'screens/add_project_page.dart';
 
 class MyHomePage extends StatefulWidget {
   final bool isDarkMode;
@@ -28,11 +29,41 @@ class _MyHomePageState extends State<MyHomePage> {
   static const String _projectsKey = 'saved_projects';
 
   final List<Project> _defaultProjects = const [
-    Project('Portfolio Website', 'Website portofolio untuk menampilkan profil dan karya.', category: 'Website', technologies: ['Flutter', 'Dart'], iconName: 'language'),
-    Project('Game Development', 'Eksperimen membuat game dan mekanika interaktif.', category: 'Game', technologies: ['Unity', 'C#'], iconName: 'sports_esports'),
-    Project('Gaming Content', 'Video gameplay dan konten seputar game.', category: 'Konten', technologies: ['OBS Studio'], iconName: 'smart_display'),
-    Project('Podcast', 'Berbagi cerita dan sudut pandang lewat obrolan.', category: 'Konten', technologies: ['Audacity'], iconName: 'mic'),
-    Project('Math Teaching', 'Belajar matematika dengan penjelasan yang mudah dipahami.', category: 'Edukasi', technologies: ['Canva'], iconName: 'calculate'),
+    Project(
+      'Portfolio Website',
+      'A portfolio website for displaying my profile and work.',
+      category: 'Website',
+      technologies: ['Flutter', 'Dart'],
+      iconName: 'language',
+    ),
+    Project(
+      'Game Development',
+      'Experiments with game development and interactive mechanics.',
+      category: 'Game',
+      technologies: ['Unity', 'C#'],
+      iconName: 'sports_esports',
+    ),
+    Project(
+      'Gaming Content',
+      'Gameplay videos and gaming content.',
+      category: 'Content',
+      technologies: ['OBS Studio'],
+      iconName: 'smart_display',
+    ),
+    Project(
+      'Podcast',
+      'Sharing stories and perspectives through conversations.',
+      category: 'Content',
+      technologies: ['Audacity'],
+      iconName: 'mic',
+    ),
+    Project(
+      'Math Teaching',
+      'Learning mathematics through clear explanations.',
+      category: 'Education',
+      technologies: ['Canva'],
+      iconName: 'calculate',
+    ),
   ];
 
   List<Project> _projects = [];
@@ -40,6 +71,7 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     super.initState();
+    _projects = List<Project>.from(_defaultProjects);
     _loadProjects();
   }
 
@@ -58,7 +90,10 @@ class _MyHomePageState extends State<MyHomePage> {
       }
 
       _projects = values
-          .map((value) => Project.fromJson(jsonDecode(value) as Map<String, dynamic>))
+          .map(
+            (value) =>
+                Project.fromJson(jsonDecode(value) as Map<String, dynamic>),
+          )
           .toList();
     });
   }
@@ -76,7 +111,10 @@ class _MyHomePageState extends State<MyHomePage> {
     if (normalized.isEmpty) {
       return false;
     }
-    return _projects.any((project) => project.title.trim().toLowerCase() == normalized.toLowerCase());
+    return _projects.any(
+      (project) =>
+          project.title.trim().toLowerCase() == normalized.toLowerCase(),
+    );
   }
 
   void _showProjects() {
@@ -110,16 +148,23 @@ class _MyHomePageState extends State<MyHomePage> {
           children: [
             Text(project.description),
             const SizedBox(height: 12),
-            Text('Kategori: ${project.category}'),
+            Text('Category: ${project.category}'),
             const SizedBox(height: 4),
-            Text('Teknologi: ${project.technologies.isEmpty ? '-' : project.technologies.join(', ')}'),
+            Text(
+              'Technologies: ${project.technologies.isEmpty ? '-' : project.technologies.join(', ')}',
+            ),
             if (project.link.isNotEmpty) ...[
               const SizedBox(height: 8),
-              SelectableText('Tautan: ${project.link}'),
+              SelectableText('Link: ${project.link}'),
             ],
           ],
         ),
-        actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Tutup'))],
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+        ],
       ),
     );
   }
@@ -133,16 +178,19 @@ class _MyHomePageState extends State<MyHomePage> {
       final title = project.title.trim();
       if (_isDuplicateProjectTitle(title)) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Nama proyek sudah ada, pilih judul lain.')),
+          const SnackBar(
+            content: Text(
+              'A project with this name already exists. Choose another title.',
+            ),
+          ),
         );
         return;
       }
 
       setState(() => _projects.insert(0, project));
       unawaited(_saveProjects());
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${project.title} ditambahkan.')),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('${project.title} added.')));
     }
   }
 
@@ -150,16 +198,26 @@ class _MyHomePageState extends State<MyHomePage> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Keluar dari portofolio?'),
-        content: const Text('Aksi ini hanya simulasi karena aplikasi belum memakai autentikasi.'),
+        title: const Text('Leave the portfolio?'),
+        content: const Text(
+          'This is only a simulation because the app does not use authentication.',
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Batal')),
-          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Ya, keluar')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Yes, leave'),
+          ),
         ],
       ),
     );
     if (confirmed == true && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Sesi portofolio ditutup.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Portfolio session closed.')),
+      );
     }
   }
 
@@ -173,32 +231,45 @@ class _MyHomePageState extends State<MyHomePage> {
             children: [
               UserAccountsDrawerHeader(
                 accountName: const Text(MyHomePage.nama),
-                accountEmail: const Text('Ilmu Komputer · PBP E'),
-                currentAccountPicture: const CircleAvatar(child: Icon(Icons.person_outline, size: 34)),
+                accountEmail: const Text('Computer Science · PBP E'),
+                currentAccountPicture: const CircleAvatar(
+                  child: Icon(Icons.person_outline, size: 34),
+                ),
                 decoration: BoxDecoration(color: colorScheme.primary),
               ),
               ListTile(
                 leading: const Icon(Icons.home_outlined),
-                title: const Text('Beranda'),
+                title: const Text('Home'),
                 selected: true,
                 onTap: () => Navigator.pop(context),
               ),
               ListTile(
                 leading: const Icon(Icons.work_outline),
-                title: const Text('Lihat proyek'),
-                onTap: () { Navigator.pop(context); _showProjects(); },
+                title: const Text('View projects'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _showProjects();
+                },
               ),
               ListTile(
                 leading: const Icon(Icons.add_circle_outline),
-                title: const Text('Tambah proyek'),
-                onTap: () { Navigator.pop(context); _showAddProjectDialog(); },
+                title: const Text('Add project'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _showAddProjectDialog();
+                },
               ),
               const Spacer(),
               const Divider(),
               ListTile(
-                leading: Icon(widget.isDarkMode ? Icons.light_mode : Icons.dark_mode),
-                title: Text(widget.isDarkMode ? 'Mode terang' : 'Mode gelap'),
-                onTap: () { Navigator.pop(context); widget.onThemeToggle(); },
+                leading: Icon(
+                  widget.isDarkMode ? Icons.light_mode : Icons.dark_mode,
+                ),
+                title: Text(widget.isDarkMode ? 'Light mode' : 'Dark mode'),
+                onTap: () {
+                  Navigator.pop(context);
+                  widget.onThemeToggle();
+                },
               ),
             ],
           ),
@@ -209,14 +280,22 @@ class _MyHomePageState extends State<MyHomePage> {
           children: [
             Icon(Icons.bolt, color: colorScheme.primary, size: 25),
             const SizedBox(width: 4),
-            const Text('nadhif.', style: TextStyle(fontWeight: FontWeight.w800, letterSpacing: -0.5)),
+            const Text(
+              'nadhif.',
+              style: TextStyle(
+                fontWeight: FontWeight.w800,
+                letterSpacing: -0.5,
+              ),
+            ),
           ],
         ),
         backgroundColor: colorScheme.surface,
         surfaceTintColor: Colors.transparent,
         actions: [
           IconButton(
-            tooltip: widget.isDarkMode ? 'Aktifkan mode terang' : 'Aktifkan mode gelap',
+            tooltip: widget.isDarkMode
+                ? 'Enable light mode'
+                : 'Enable dark mode',
             onPressed: widget.onThemeToggle,
             icon: Icon(widget.isDarkMode ? Icons.light_mode : Icons.dark_mode),
           ),
@@ -235,26 +314,37 @@ class _MyHomePageState extends State<MyHomePage> {
                   onProjectsTap: _showProjects,
                 ),
                 const SizedBox(height: 22),
-                const _SectionTitle(title: 'Sedikit tentang saya'),
+                const _SectionTitle(title: 'A little about me'),
                 const SizedBox(height: 12),
                 Row(
                   children: const [
-                    Expanded(child: InfoCard(title: 'NPM', content: MyHomePage.npm)),
+                    Expanded(
+                      child: InfoCard(title: 'NPM', content: MyHomePage.npm),
+                    ),
                     SizedBox(width: 9),
-                    Expanded(child: InfoCard(title: 'PROGRAM', content: 'Ilmu Komputer')),
+                    Expanded(
+                      child: InfoCard(
+                        title: 'PROGRAM',
+                        content: 'Computer Science',
+                      ),
+                    ),
                     SizedBox(width: 9),
-                    Expanded(child: InfoCard(title: 'KELAS', content: MyHomePage.kelas)),
+                    Expanded(
+                      child: InfoCard(
+                        title: 'CLASS',
+                        content: MyHomePage.kelas,
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 24),
                 Row(
                   children: [
-                    const Expanded(child: _SectionTitle(title: 'Yang saya kerjakan')),
+                    const Expanded(child: _SectionTitle(title: 'What I do')),
                     Text(
-                      '${_projects.length} hal seru',
-                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                            color: colorScheme.onSurfaceVariant,
-                          ),
+                      '${_projects.length} fun projects',
+                      style: Theme.of(context).textTheme.labelMedium
+                          ?.copyWith(color: colorScheme.onSurfaceVariant),
                     ),
                   ],
                 ),
@@ -263,7 +353,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   children: [
                     Expanded(
                       child: _ActionCard(
-                        label: 'Lihat proyek',
+                        label: 'View projects',
                         icon: Icons.arrow_outward,
                         color: colorScheme.primary,
                         onTap: _showProjects,
@@ -272,7 +362,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     const SizedBox(width: 10),
                     Expanded(
                       child: _ActionCard(
-                        label: 'Tambah proyek',
+                        label: 'Add project',
                         icon: Icons.add,
                         color: colorScheme.secondary,
                         onTap: _showAddProjectDialog,
@@ -289,7 +379,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                const _SectionTitle(title: 'Sedang saya pelajari'),
+                const _SectionTitle(title: 'Currently learning'),
                 const SizedBox(height: 10),
                 const Wrap(
                   spacing: 8,
@@ -304,10 +394,9 @@ class _MyHomePageState extends State<MyHomePage> {
                 const SizedBox(height: 18),
                 Center(
                   child: Text(
-                    'Dibuat dengan rasa ingin tahu + Flutter',
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
-                        ),
+                    'Built with curiosity + Flutter',
+                    style: Theme.of(context).textTheme.labelSmall
+                        ?.copyWith(color: colorScheme.onSurfaceVariant),
                   ),
                 ),
               ],
@@ -323,15 +412,16 @@ class _PortfolioHero extends StatelessWidget {
   final bool isDarkMode;
   final VoidCallback onProjectsTap;
 
-  const _PortfolioHero({
-    required this.isDarkMode,
-    required this.onProjectsTap,
-  });
+  const _PortfolioHero({required this.isDarkMode, required this.onProjectsTap});
 
   @override
   Widget build(BuildContext context) {
-    final cardColor = isDarkMode ? const Color(0xFF1F2937) : const Color(0xFF1C1917);
-    final accentColor = isDarkMode ? const Color(0xFFF59E0B) : const Color(0xFFD95D39);
+    final cardColor = isDarkMode
+        ? const Color(0xFF1F2937)
+        : const Color(0xFF1C1917);
+    final accentColor = isDarkMode
+        ? const Color(0xFFF59E0B)
+        : const Color(0xFFD95D39);
 
     return Container(
       width: double.infinity,
@@ -388,8 +478,11 @@ class _PortfolioHero extends StatelessWidget {
                           ),
                           const SizedBox(height: 8),
                           const Text(
-                            'Mahasiswa Ilmu Komputer',
-                            style: TextStyle(color: Color(0xFFD6D3D1), fontSize: 12),
+                            'Computer Science Student',
+                            style: TextStyle(
+                              color: Color(0xFFD6D3D1),
+                              fontSize: 12,
+                            ),
                           ),
                         ],
                       ),
@@ -419,7 +512,7 @@ class _PortfolioHero extends StatelessWidget {
                 ),
                 const SizedBox(height: 18),
                 const Text(
-                  'Suka membuat hal digital, bereksperimen dengan game, dan berbagi ilmu.',
+                  'I enjoy making digital things, experimenting with games, and sharing knowledge.',
                   style: TextStyle(
                     color: Color(0xFFE7E5E4),
                     fontSize: 13,
@@ -432,10 +525,13 @@ class _PortfolioHero extends StatelessWidget {
                   style: FilledButton.styleFrom(
                     backgroundColor: accentColor,
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
                   ),
                   icon: const Icon(Icons.arrow_forward, size: 18),
-                  label: const Text('Jelajahi karya'),
+                  label: const Text('Explore work'),
                 ),
               ],
             ),
@@ -492,18 +588,21 @@ class _ProjectSheetState extends State<_ProjectSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Proyek saya', style: Theme.of(context).textTheme.headlineSmall),
+            Text(
+              'My projects',
+              style: Theme.of(context).textTheme.headlineSmall,
+            ),
             const SizedBox(height: 12),
             TextField(
               controller: _searchController,
               onChanged: (value) => setState(() => _query = value),
               decoration: InputDecoration(
-                hintText: 'Cari proyek...',
+                hintText: 'Search projects...',
                 prefixIcon: const Icon(Icons.search),
                 suffixIcon: _query.trim().isEmpty
                     ? null
                     : IconButton(
-                        tooltip: 'Hapus pencarian',
+                        tooltip: 'Clear search',
                         onPressed: () {
                           _searchController.clear();
                           setState(() => _query = '');
@@ -519,7 +618,7 @@ class _ProjectSheetState extends State<_ProjectSheet> {
                   ? const Center(
                       child: Padding(
                         padding: EdgeInsets.all(24),
-                        child: Text('Proyek tidak ditemukan.'),
+                        child: Text('No projects found.'),
                       ),
                     )
                   : ListView.builder(
@@ -530,7 +629,9 @@ class _ProjectSheetState extends State<_ProjectSheet> {
                         return ListTile(
                           leading: CircleAvatar(child: Icon(project.icon)),
                           title: Text(project.title),
-                          subtitle: Text('${project.category} · ${project.technologies.join(', ')}\n${project.description}'),
+                          subtitle: Text(
+                            '${project.category} · ${project.technologies.join(', ')}\n${project.description}',
+                          ),
                           isThreeLine: true,
                           onTap: () => widget.onProjectTap(project),
                         );
@@ -542,7 +643,7 @@ class _ProjectSheetState extends State<_ProjectSheet> {
               child: TextButton.icon(
                 onPressed: widget.onAddProjectTap,
                 icon: const Icon(Icons.add),
-                label: const Text('Tambah proyek'),
+                label: const Text('Add project'),
               ),
             ),
           ],
@@ -558,45 +659,54 @@ class _ActionCard extends StatelessWidget {
   final Color color;
   final VoidCallback onTap;
 
-  const _ActionCard({required this.label, required this.icon, required this.color, required this.onTap});
+  const _ActionCard({
+    required this.label,
+    required this.icon,
+    required this.color,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) => Container(
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: color.withValues(alpha: 0.18)),
-          boxShadow: [
-            BoxShadow(
-              color: color.withValues(alpha: 0.08),
-              blurRadius: 10,
-              offset: const Offset(0, 6),
+    decoration: BoxDecoration(
+      color: color.withValues(alpha: 0.1),
+      borderRadius: BorderRadius.circular(18),
+      border: Border.all(color: color.withValues(alpha: 0.18)),
+      boxShadow: [
+        BoxShadow(
+          color: color.withValues(alpha: 0.08),
+          blurRadius: 10,
+          offset: const Offset(0, 6),
+        ),
+      ],
+    ),
+    child: InkWell(
+      borderRadius: BorderRadius.circular(18),
+      onTap: onTap,
+      child: SizedBox(
+        height: 72,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: color, size: 20),
+            const SizedBox(width: 9),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 3),
+              child: Text(
+                label,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: color,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
             ),
           ],
         ),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(18),
-          onTap: onTap,
-          child: SizedBox(
-            height: 72,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(icon, color: color, size: 20),
-                const SizedBox(width: 9),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 3),
-                  child: Text(
-                    label,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w700),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
+      ),
+    ),
+  );
 }
 
 class _SectionTitle extends StatelessWidget {
@@ -604,7 +714,11 @@ class _SectionTitle extends StatelessWidget {
   const _SectionTitle({required this.title});
 
   @override
-  Widget build(BuildContext context) => Text(title, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold));
+  Widget build(BuildContext context) => Text(
+    title,
+    style: Theme.of(context).textTheme.titleMedium
+        ?.copyWith(fontWeight: FontWeight.bold),
+  );
 }
 
 class _SkillChip extends StatelessWidget {
@@ -614,11 +728,11 @@ class _SkillChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Chip(
-        avatar: Icon(icon, size: 18),
-        label: Text(label),
-        side: BorderSide.none,
-        backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
-      );
+    avatar: Icon(icon, size: 18),
+    label: Text(label),
+    side: BorderSide.none,
+    backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
+  );
 }
 
 class InfoCard extends StatelessWidget {
@@ -628,29 +742,33 @@ class InfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Card(
-        elevation: 0.5,
-        color: Theme.of(context).colorScheme.surfaceContainerLow,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 14),
-          child: Column(
-            children: [
-              Text(
-                title,
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  fontSize: 9,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 0.8,
-                ),
-              ),
-              const SizedBox(height: 8),
-              FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Text(content, maxLines: 1, style: const TextStyle(fontWeight: FontWeight.w700)),
-              ),
-            ],
+    elevation: 0.5,
+    color: Theme.of(context).colorScheme.surfaceContainerLow,
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+    child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 14),
+      child: Column(
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              fontSize: 9,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0.8,
+            ),
           ),
-        ),
-      );
+          const SizedBox(height: 8),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              content,
+              maxLines: 1,
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
 }
