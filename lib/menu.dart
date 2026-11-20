@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'project.dart';
+import 'portfolio_drawer.dart';
 import 'screens/add_project_page.dart';
 
 class MyHomePage extends StatefulWidget {
@@ -172,7 +173,12 @@ class _MyHomePageState extends State<MyHomePage> {
   Future<void> _showAddProjectDialog() async {
     final project = await Navigator.push<Project>(
       context,
-      MaterialPageRoute(builder: (_) => const AddProjectPage()),
+      MaterialPageRoute(
+        builder: (_) => AddProjectPage(
+          isDarkMode: widget.isDarkMode,
+          onThemeToggle: widget.onThemeToggle,
+        ),
+      ),
     );
     if (project != null && mounted) {
       final title = project.title.trim();
@@ -225,55 +231,23 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
-      drawer: Drawer(
-        child: SafeArea(
-          child: Column(
-            children: [
-              UserAccountsDrawerHeader(
-                accountName: const Text(MyHomePage.nama),
-                accountEmail: const Text('Computer Science · PBP E'),
-                currentAccountPicture: const CircleAvatar(
-                  child: Icon(Icons.person_outline, size: 34),
-                ),
-                decoration: BoxDecoration(color: colorScheme.primary),
-              ),
-              ListTile(
-                leading: const Icon(Icons.home_outlined),
-                title: const Text('Home'),
-                selected: true,
-                onTap: () => Navigator.pop(context),
-              ),
-              ListTile(
-                leading: const Icon(Icons.work_outline),
-                title: const Text('View projects'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _showProjects();
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.add_circle_outline),
-                title: const Text('Add project'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _showAddProjectDialog();
-                },
-              ),
-              const Spacer(),
-              const Divider(),
-              ListTile(
-                leading: Icon(
-                  widget.isDarkMode ? Icons.light_mode : Icons.dark_mode,
-                ),
-                title: Text(widget.isDarkMode ? 'Light mode' : 'Dark mode'),
-                onTap: () {
-                  Navigator.pop(context);
-                  widget.onThemeToggle();
-                },
-              ),
-            ],
-          ),
-        ),
+      drawer: PortfolioDrawer(
+        isDarkMode: widget.isDarkMode,
+        isHomeSelected: true,
+        isAddProjectSelected: false,
+        onThemeToggle: () {
+          Navigator.pop(context);
+          widget.onThemeToggle();
+        },
+        onHome: () => Navigator.pop(context),
+        onViewProjects: () {
+          Navigator.pop(context);
+          _showProjects();
+        },
+        onAddProject: () {
+          Navigator.pop(context);
+          _showAddProjectDialog();
+        },
       ),
       appBar: AppBar(
         title: Row(

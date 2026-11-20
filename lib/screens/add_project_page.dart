@@ -1,9 +1,17 @@
 import 'package:flutter/material.dart';
 
 import '../project.dart';
+import '../portfolio_drawer.dart';
 
 class AddProjectPage extends StatefulWidget {
-  const AddProjectPage({super.key});
+  final bool isDarkMode;
+  final VoidCallback? onThemeToggle;
+
+  const AddProjectPage({
+    super.key,
+    this.isDarkMode = false,
+    this.onThemeToggle,
+  });
 
   @override
   State<AddProjectPage> createState() => _AddProjectPageState();
@@ -54,6 +62,31 @@ class _AddProjectPageState extends State<AddProjectPage> {
   @override
   Widget build(BuildContext context) => Scaffold(
     resizeToAvoidBottomInset: true,
+    drawer: PortfolioDrawer(
+      isDarkMode: widget.isDarkMode,
+      isHomeSelected: false,
+      isAddProjectSelected: true,
+      onThemeToggle: () {
+        Navigator.pop(context);
+        widget.onThemeToggle?.call();
+      },
+      onHome: () {
+        Navigator.pop(context);
+        Navigator.popUntil(context, (route) => route.isFirst);
+      },
+      onAddProject: () {
+        Navigator.pop(context);
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => AddProjectPage(
+              isDarkMode: widget.isDarkMode,
+              onThemeToggle: widget.onThemeToggle,
+            ),
+          ),
+        );
+      },
+    ),
     appBar: AppBar(
       title: const Text('Add Project'),
       surfaceTintColor: Colors.transparent,

@@ -30,6 +30,18 @@ void main() {
     await tester.tap(find.text('Open form'));
     await tester.pumpAndSettle();
 
+    final scaffold = tester.state<ScaffoldState>(find.byType(Scaffold).last);
+    scaffold.openDrawer();
+    await tester.pumpAndSettle();
+    expect(find.text('Home'), findsOneWidget);
+    expect(find.text('Add project'), findsOneWidget);
+    await tester.tap(find.text('Home'));
+    await tester.pumpAndSettle();
+    expect(find.text('Open form'), findsOneWidget);
+
+    await tester.tap(find.text('Open form'));
+    await tester.pumpAndSettle();
+
     await tester.ensureVisible(find.text('Save project'));
     await tester.tap(find.text('Save project'));
     await tester.pumpAndSettle();
