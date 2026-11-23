@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:json_annotation/json_annotation.dart';
 
 part 'project.g.dart';
@@ -69,8 +69,9 @@ class Project {
           .where((item) => item.isNotEmpty)
           .toList();
     }
-    if (normalized['link'] == null)
+    if (normalized['link'] == null) {
       normalized['link'] = normalized['project_url'];
+    }
     normalized['id'] = normalized['id']?.toString();
     return _$ProjectFromJson(normalized);
   }

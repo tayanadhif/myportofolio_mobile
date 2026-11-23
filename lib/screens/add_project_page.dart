@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../portfolio_drawer.dart';
 import '../project.dart';
@@ -72,6 +72,7 @@ class _AddProjectPageState extends State<AddProjectPage> {
         if (mounted) setState(() => _isSaving = false);
       }
     }
+    if (!mounted) return;
 
     await showDialog<void>(
       context: context,

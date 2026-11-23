@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../project.dart';
 import '../services/api_client.dart';
@@ -74,12 +74,13 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
           );
         }
         final projects = snapshot.data ?? const <Project>[];
-        if (projects.isEmpty)
+        if (projects.isEmpty) {
           return const Center(child: Text('No projects yet.'));
+        }
         return ListView.separated(
           padding: const EdgeInsets.all(16),
           itemCount: projects.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 8),
+          separatorBuilder: (context, _) => const SizedBox(height: 8),
           itemBuilder: (context, index) {
             final project = projects[index];
             return Card(
