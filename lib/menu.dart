@@ -7,17 +7,21 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'project.dart';
 import 'portfolio_drawer.dart';
 import 'screens/add_project_page.dart';
+import 'services/auth_state.dart';
+import 'screens/project_list_screen.dart';
 
 class MyHomePage extends StatefulWidget {
   final bool isDarkMode;
   final VoidCallback onThemeToggle;
-  final VoidCallback onLogout;
+  final Future<void> Function() onLogout;
+  final AuthState authState;
 
   const MyHomePage({
     super.key,
     required this.isDarkMode,
     required this.onThemeToggle,
     required this.onLogout,
+    required this.authState,
   });
 
   static const String npm = '2506537745';
@@ -121,53 +125,15 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _showProjects() {
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      builder: (sheetContext) => _ProjectSheet(
-        projects: _projects,
-        onProjectTap: (project) {
-          Navigator.pop(sheetContext);
-          _showProjectDetails(project);
-        },
-        onAddProjectTap: () {
-          Navigator.pop(sheetContext);
-          _showAddProjectDialog();
-        },
-      ),
-    );
-  }
-
-  void _showProjectDetails(Project project) {
-    showDialog<void>(
-      context: context,
-      builder: (context) => AlertDialog(
-        icon: Icon(project.icon, size: 34),
-        title: Text(project.title),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(project.description),
-            const SizedBox(height: 12),
-            Text('Category: ${project.category}'),
-            const SizedBox(height: 4),
-            Text(
-              'Technologies: ${project.technologies.isEmpty ? '-' : project.technologies.join(', ')}',
-            ),
-            if (project.link.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              SelectableText('Link: ${project.link}'),
-            ],
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
+    unawaited(
+      Navigator.push<void>(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ProjectListScreen(
+            apiClient: widget.authState.apiClient,
+            token: widget.authState.token,
           ),
-        ],
+        ),
       ),
     );
   }
@@ -179,6 +145,8 @@ class _MyHomePageState extends State<MyHomePage> {
         builder: (_) => AddProjectPage(
           isDarkMode: widget.isDarkMode,
           onThemeToggle: widget.onThemeToggle,
+          apiClient: widget.authState.apiClient,
+          token: widget.authState.token,
         ),
       ),
     );
@@ -207,9 +175,7 @@ class _MyHomePageState extends State<MyHomePage> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Leave the portfolio?'),
-        content: const Text(
-          'This is only a simulation because the app does not use authentication.',
-        ),
+        content: const Text('Your Django API session will be cleared.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -223,7 +189,7 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
     );
     if (confirmed == true && mounted) {
-      widget.onLogout();
+      await widget.onLogout();
     }
   }
 
@@ -511,117 +477,6 @@ class _PortfolioHero extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _ProjectSheet extends StatefulWidget {
-  final List<Project> projects;
-  final ValueChanged<Project> onProjectTap;
-  final VoidCallback onAddProjectTap;
-
-  const _ProjectSheet({
-    required this.projects,
-    required this.onProjectTap,
-    required this.onAddProjectTap,
-  });
-
-  @override
-  State<_ProjectSheet> createState() => _ProjectSheetState();
-}
-
-class _ProjectSheetState extends State<_ProjectSheet> {
-  final TextEditingController _searchController = TextEditingController();
-  String _query = '';
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
-
-  List<Project> get _visibleProjects {
-    final query = _query.trim().toLowerCase();
-    if (query.isEmpty) {
-      return widget.projects;
-    }
-    return widget.projects
-        .where((project) => project.title.toLowerCase().contains(query))
-        .toList();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final visibleProjects = _visibleProjects;
-
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'My projects',
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _searchController,
-              onChanged: (value) => setState(() => _query = value),
-              decoration: InputDecoration(
-                hintText: 'Search projects...',
-                prefixIcon: const Icon(Icons.search),
-                suffixIcon: _query.trim().isEmpty
-                    ? null
-                    : IconButton(
-                        tooltip: 'Clear search',
-                        onPressed: () {
-                          _searchController.clear();
-                          setState(() => _query = '');
-                        },
-                        icon: const Icon(Icons.clear),
-                      ),
-                border: const OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Flexible(
-              child: visibleProjects.isEmpty
-                  ? const Center(
-                      child: Padding(
-                        padding: EdgeInsets.all(24),
-                        child: Text('No projects found.'),
-                      ),
-                    )
-                  : ListView.builder(
-                      shrinkWrap: true,
-                      itemCount: visibleProjects.length,
-                      itemBuilder: (context, index) {
-                        final project = visibleProjects[index];
-                        return ListTile(
-                          leading: CircleAvatar(child: Icon(project.icon)),
-                          title: Text(project.title),
-                          subtitle: Text(
-                            '${project.category} · ${project.technologies.join(', ')}\n${project.description}',
-                          ),
-                          isThreeLine: true,
-                          onTap: () => widget.onProjectTap(project),
-                        );
-                      },
-                    ),
-            ),
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton.icon(
-                onPressed: widget.onAddProjectTap,
-                icon: const Icon(Icons.add),
-                label: const Text('Add project'),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

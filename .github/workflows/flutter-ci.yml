@@ -1,0 +1,17 @@
+name: Flutter CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  flutter:
+    uses: VeryGoodOpenSource/very_good_workflows/.github/workflows/flutter_package.yml@v1
+    with:
+      flutter_channel: stable
+      format_directories: lib
+      analyze_directories: lib
+      run_bloc_lint: false
+      min_coverage: 0

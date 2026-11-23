@@ -1,15 +1,21 @@
 import 'package:flutter/material.dart';
 
 import '../portfolio_drawer.dart';
+import '../project.dart';
+import '../services/api_client.dart';
 
 class AddProjectPage extends StatefulWidget {
   final bool isDarkMode;
   final VoidCallback? onThemeToggle;
+  final ApiClient? apiClient;
+  final String? token;
 
   const AddProjectPage({
     super.key,
     this.isDarkMode = false,
     this.onThemeToggle,
+    this.apiClient,
+    this.token,
   });
 
   @override
@@ -23,6 +29,8 @@ class _AddProjectPageState extends State<AddProjectPage> {
   final _technologiesController = TextEditingController();
   final _linkController = TextEditingController();
   String _category = 'Other';
+  bool _isSaving = false;
+  String? _saveError;
 
   @override
   void dispose() {
@@ -40,8 +48,30 @@ class _AddProjectPageState extends State<AddProjectPage> {
         .split(',')
         .map((technology) => technology.trim())
         .where((technology) => technology.isNotEmpty)
-        .join(', ');
+        .toList();
     final link = _linkController.text.trim();
+    final project = Project(
+      _titleController.text.trim(),
+      _descriptionController.text.trim(),
+      category: _category,
+      technologies: technologies,
+      link: link,
+    );
+
+    if (widget.apiClient != null && widget.token != null) {
+      setState(() {
+        _isSaving = true;
+        _saveError = null;
+      });
+      try {
+        await widget.apiClient!.createProject(project, widget.token!);
+      } catch (error) {
+        if (mounted) setState(() => _saveError = error.toString());
+        return;
+      } finally {
+        if (mounted) setState(() => _isSaving = false);
+      }
+    }
 
     await showDialog<void>(
       context: context,
@@ -59,7 +89,7 @@ class _AddProjectPageState extends State<AddProjectPage> {
               Text('Category: $_category'),
               const SizedBox(height: 8),
               Text(
-                'Technologies: ${technologies.isEmpty ? '-' : technologies}',
+                'Technologies: ${technologies.isEmpty ? '-' : technologies.join(', ')}',
               ),
               const SizedBox(height: 8),
               Text('Project link: ${link.isEmpty ? '-' : link}'),
@@ -68,7 +98,12 @@ class _AddProjectPageState extends State<AddProjectPage> {
         ),
         actions: [
           FilledButton(
-            onPressed: () => Navigator.pop(dialogContext),
+            onPressed: () {
+              Navigator.pop(dialogContext);
+              if (widget.apiClient != null) {
+                Navigator.pop(context, project);
+              }
+            },
             child: const Text('Close'),
           ),
         ],
@@ -99,6 +134,8 @@ class _AddProjectPageState extends State<AddProjectPage> {
             builder: (_) => AddProjectPage(
               isDarkMode: widget.isDarkMode,
               onThemeToggle: widget.onThemeToggle,
+              apiClient: widget.apiClient,
+              token: widget.token,
             ),
           ),
         );
@@ -263,14 +300,24 @@ class _AddProjectPageState extends State<AddProjectPage> {
                     ],
                   ),
                 ),
+                if (_saveError != null)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Text(
+                      _saveError!,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                    ),
+                  ),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
                   child: SizedBox(
                     width: double.infinity,
                     child: FilledButton.icon(
-                      onPressed: _submit,
+                      onPressed: _isSaving ? null : _submit,
                       icon: const Icon(Icons.save_outlined),
-                      label: const Text('Save project'),
+                      label: Text(_isSaving ? 'Saving...' : 'Save project'),
                     ),
                   ),
                 ),

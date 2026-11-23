@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
-class GoogleLoginPage extends StatefulWidget {
+class LoginScreen extends StatefulWidget {
   final bool isDarkMode;
   final VoidCallback onThemeToggle;
-  final VoidCallback onLoginSuccess;
+  final Future<void> Function(String username, String password) onLoginSuccess;
 
-  const GoogleLoginPage({
+  const LoginScreen({
     super.key,
     required this.isDarkMode,
     required this.onThemeToggle,
@@ -13,29 +13,40 @@ class GoogleLoginPage extends StatefulWidget {
   });
 
   @override
-  State<GoogleLoginPage> createState() => _GoogleLoginPageState();
+  State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _GoogleLoginPageState extends State<GoogleLoginPage> {
+class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
+  final _usernameController = TextEditingController();
+  final _passwordController = TextEditingController();
   bool _isLoading = false;
+  String? _error;
 
   @override
   void dispose() {
-    _emailController.dispose();
+    _usernameController.dispose();
+    _passwordController.dispose();
     super.dispose();
   }
 
-  Future<void> _continueWithGoogle() async {
+  Future<void> _signIn() async {
     if (!_formKey.currentState!.validate()) return;
 
-    setState(() => _isLoading = true);
-    await Future<void>.delayed(const Duration(milliseconds: 700));
-    if (!mounted) return;
-
-    setState(() => _isLoading = false);
-    widget.onLoginSuccess();
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+    try {
+      await widget.onLoginSuccess(
+        _usernameController.text.trim(),
+        _passwordController.text,
+      );
+    } catch (error) {
+      if (mounted) setState(() => _error = error.toString());
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -77,7 +88,7 @@ class _GoogleLoginPageState extends State<GoogleLoginPage> {
                         shape: BoxShape.circle,
                       ),
                       child: Text(
-                        'G',
+                        'P',
                         style: TextStyle(
                           color: colorScheme.primary,
                           fontSize: 46,
@@ -87,47 +98,57 @@ class _GoogleLoginPageState extends State<GoogleLoginPage> {
                     ),
                     const SizedBox(height: 24),
                     Text(
-                      'Welcome to my portfolio',
+                      'Sign in to your portfolio',
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.headlineSmall
                           ?.copyWith(fontWeight: FontWeight.w800),
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Use your Google account to enter the portfolio.',
+                      'Use your Django account to continue.',
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.bodyMedium
                           ?.copyWith(color: colorScheme.onSurfaceVariant),
                     ),
                     const SizedBox(height: 28),
                     TextFormField(
-                      key: const Key('google_email_field'),
-                      controller: _emailController,
+                      key: const Key('login_username_field'),
+                      controller: _usernameController,
                       decoration: const InputDecoration(
-                        labelText: 'Google email',
-                        hintText: 'name@gmail.com',
-                        prefixIcon: Icon(Icons.alternate_email),
+                        labelText: 'Username',
+                        prefixIcon: Icon(Icons.person_outline),
                         border: OutlineInputBorder(),
                       ),
-                      keyboardType: TextInputType.emailAddress,
                       textInputAction: TextInputAction.done,
-                      autofillHints: const [AutofillHints.email],
                       validator: (value) {
-                        final email = value?.trim() ?? '';
-                        if (email.isEmpty) {
-                          return 'Google email is required.';
-                        }
-                        if (!email.endsWith('@gmail.com')) {
-                          return 'Use a valid Gmail address.';
-                        }
-                        return null;
+                        return value == null || value.trim().isEmpty
+                            ? 'Username wajib diisi.'
+                            : null;
                       },
-                      onFieldSubmitted: (_) => _continueWithGoogle(),
                     ),
                     const SizedBox(height: 16),
+                    TextFormField(
+                      key: const Key('login_password_field'),
+                      controller: _passwordController,
+                      decoration: const InputDecoration(
+                        labelText: 'Password',
+                        prefixIcon: Icon(Icons.lock_outline),
+                        border: OutlineInputBorder(),
+                      ),
+                      obscureText: true,
+                      validator: (value) => value == null || value.isEmpty
+                          ? 'Password wajib diisi.'
+                          : null,
+                      onFieldSubmitted: (_) => _signIn(),
+                    ),
+                    if (_error != null) ...[
+                      const SizedBox(height: 12),
+                      Text(_error!, style: TextStyle(color: colorScheme.error)),
+                    ],
+                    const SizedBox(height: 16),
                     OutlinedButton.icon(
-                      key: const Key('continue_with_google_button'),
-                      onPressed: _isLoading ? null : _continueWithGoogle,
+                      key: const Key('login_button'),
+                      onPressed: _isLoading ? null : _signIn,
                       style: OutlinedButton.styleFrom(
                         minimumSize: const Size.fromHeight(52),
                         side: BorderSide(color: colorScheme.outline),
@@ -138,16 +159,12 @@ class _GoogleLoginPageState extends State<GoogleLoginPage> {
                               height: 20,
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
-                          : const Icon(Icons.g_mobiledata, size: 28),
-                      label: Text(
-                        _isLoading
-                            ? 'Connecting to Google...'
-                            : 'Continue with Google',
-                      ),
+                          : const Icon(Icons.login, size: 24),
+                      label: Text(_isLoading ? 'Signing in...' : 'Sign in'),
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      'Demo sign-in: no Google credentials are sent to an external service.',
+                      'Your credentials are sent to the configured Django API.',
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.labelSmall
                           ?.copyWith(color: colorScheme.onSurfaceVariant),
