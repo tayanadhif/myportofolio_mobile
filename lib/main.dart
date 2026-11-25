@@ -65,16 +65,15 @@ class _MyAppState extends State<MyApp> {
 
   ThemeData _buildTheme(Brightness brightness) {
     final isDark = brightness == Brightness.dark;
-    final colorScheme = ColorScheme.fromSeed(
-      seedColor: isDark
-          ? const Color(0xFFFF5B4E)
-          : const Color(0xFFC93E36),
-      brightness: brightness,
-    ).copyWith(
-      surface: isDark ? const Color(0xFF11141A) : const Color(0xFFFFFAF1),
-      primary: isDark ? const Color(0xFFFF5B4E) : const Color(0xFFC93E36),
-      secondary: isDark ? const Color(0xFFFFC247) : const Color(0xFFC93E36),
-    );
+    final colorScheme =
+        ColorScheme.fromSeed(
+          seedColor: isDark ? const Color(0xFFFF5B4E) : const Color(0xFFC93E36),
+          brightness: brightness,
+        ).copyWith(
+          surface: isDark ? const Color(0xFF11141A) : const Color(0xFFFFFAF1),
+          primary: isDark ? const Color(0xFFFF5B4E) : const Color(0xFFC93E36),
+          secondary: isDark ? const Color(0xFFFFC247) : const Color(0xFFC93E36),
+        );
 
     return ThemeData(
       colorScheme: colorScheme,

@@ -207,9 +207,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         'Google authentication opens the portfolio website. '
                         'It does not create an API token in this app.',
                         textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
-                        ),
+                        style: Theme.of(context).textTheme.labelSmall
+                            ?.copyWith(color: colorScheme.onSurfaceVariant),
                       ),
                     ],
                     if (widget.onRegister != null) ...[

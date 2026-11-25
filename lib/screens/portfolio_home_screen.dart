@@ -311,10 +311,7 @@ class _MyHomePageState extends State<MyHomePage> {
             onPressed: _openRegister,
             child: Text(
               'Register',
-              style: TextStyle(
-                color: _goldColor,
-                fontWeight: FontWeight.w700,
-              ),
+              style: TextStyle(color: _goldColor, fontWeight: FontWeight.w700),
             ),
           )
         else
