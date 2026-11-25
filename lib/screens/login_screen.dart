@@ -4,12 +4,16 @@ class LoginScreen extends StatefulWidget {
   final bool isDarkMode;
   final VoidCallback onThemeToggle;
   final Future<void> Function(String username, String password) onLoginSuccess;
+  final VoidCallback? onRegister;
+  final VoidCallback? onGoogleSignIn;
 
   const LoginScreen({
     super.key,
     required this.isDarkMode,
     required this.onThemeToggle,
     required this.onLoginSuccess,
+    this.onRegister,
+    this.onGoogleSignIn,
   });
 
   @override
@@ -42,6 +46,7 @@ class _LoginScreenState extends State<LoginScreen> {
         _usernameController.text.trim(),
         _passwordController.text,
       );
+      if (mounted) Navigator.pop(context);
     } catch (error) {
       if (mounted) setState(() => _error = error.toString());
     } finally {
@@ -162,6 +167,59 @@ class _LoginScreenState extends State<LoginScreen> {
                           : const Icon(Icons.login, size: 24),
                       label: Text(_isLoading ? 'Signing in...' : 'Sign in'),
                     ),
+                    if (widget.onGoogleSignIn != null) ...[
+                      const SizedBox(height: 20),
+                      Row(
+                        children: [
+                          const Expanded(child: Divider()),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            child: Text(
+                              'or',
+                              style: TextStyle(
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ),
+                          const Expanded(child: Divider()),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      OutlinedButton.icon(
+                        key: const Key('google_auth_button'),
+                        onPressed: widget.onGoogleSignIn,
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size.fromHeight(52),
+                          side: BorderSide(color: colorScheme.outline),
+                        ),
+                        icon: const Text(
+                          'G',
+                          style: TextStyle(
+                            color: Color(0xFF4285F4),
+                            fontSize: 20,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        label: const Text('Continue with Google'),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Google authentication opens the portfolio website. '
+                        'It does not create an API token in this app.',
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                    if (widget.onRegister != null) ...[
+                      const SizedBox(height: 12),
+                      TextButton(
+                        key: const Key('register_link_button'),
+                        onPressed: widget.onRegister,
+                        child: const Text('Belum punya akun? Daftar di sini'),
+                      ),
+                    ],
                     const SizedBox(height: 12),
                     Text(
                       'Your credentials are sent to the configured Django API.',

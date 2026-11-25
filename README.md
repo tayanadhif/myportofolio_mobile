@@ -119,6 +119,10 @@ samples, guidance on mobile development, and a full API reference.
 
    Misalnya, isian `"   "` pada `Project name` ditolak meskipun tidak benar-benar kosong karena `validator` memanggil `trim()` lalu memeriksa apakah hasilnya kosong. Pemilihan `TextFormField` atau papan ketik URL hanya mengatur cara pengguna memasukkan atau mengetik nilai; pilihan tersebut tidak menjamin bahwa nilai yang dikirim valid. Oleh sebab itu, validasi tetap diperlukan untuk memeriksa spasi kosong, panjang teks, kategori, dan format URL.
 
+### Tugas 9
+
+Model `Project` di `lib/models/project.dart` menggunakan `@JsonSerializable(fieldRename: FieldRename.snake)` untuk menyesuaikan JSON dengan serializer DRF (`tech_stack` dan `project_url`). Field opsional memiliki nilai default, sedangkan `id` dari server tidak disertakan dalam JSON request. Jalankan `dart run build_runner build --delete-conflicting-outputs` untuk membuat `project.g.dart`; berkas `*.g.dart` diabaikan Git dan analyzer.
+
 ### AI Disclosure
 
 Saya menggunakan ChatGPT sebagai alat bantu untuk memperoleh panduan dan langkah-langkah dalam mengerjakan proyek, memverifikasi pemahaman mengenai konsep Flutter, serta mencari solusi saat menemui kendala selama pengembangan. Saya meninjau dan menyesuaikan saran yang diberikan, kemudian menguji aplikasi untuk memastikan perubahan sesuai dengan kebutuhan proyek.

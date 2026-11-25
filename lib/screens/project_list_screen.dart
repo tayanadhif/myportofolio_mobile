@@ -1,6 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 
-import '../project.dart';
+import '../models/project.dart';
 import '../services/api_client.dart';
 import 'add_project_page.dart';
 

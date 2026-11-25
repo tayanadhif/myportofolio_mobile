@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
-import '../project.dart';
+import '../models/project.dart';
 
 /// HTTP boundary for the Django REST API.
 /// Set API_BASE_URL with --dart-define when running on a device/emulator.

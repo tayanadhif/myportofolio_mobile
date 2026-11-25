@@ -3,7 +3,7 @@ import 'package:json_annotation/json_annotation.dart';
 
 part 'project.g.dart';
 
-@JsonSerializable()
+@JsonSerializable(fieldRename: FieldRename.snake)
 class Project {
   @JsonKey(defaultValue: 'Untitled Project')
   final String title;
@@ -11,20 +11,24 @@ class Project {
   final String description;
   @JsonKey(defaultValue: 'Lainnya')
   final String category;
-  @JsonKey(defaultValue: <String>[])
+  @JsonKey(
+    name: 'tech_stack',
+    fromJson: _technologiesFromJson,
+    toJson: _technologiesToJson,
+  )
   final List<String> technologies;
-  @JsonKey(defaultValue: '')
+  @JsonKey(name: 'project_url', defaultValue: '')
   final String link;
-  @JsonKey(name: 'icon', defaultValue: 'lightbulb_outline')
+  @JsonKey(includeFromJson: false, includeToJson: false)
   final String iconName;
-  @JsonKey(includeIfNull: false)
+  @JsonKey(includeToJson: false)
   final String? id;
 
   const Project(
     this.title,
     this.description, {
     this.category = 'Lainnya',
-    this.technologies = const [],
+    this.technologies = const <String>[],
     this.link = '',
     this.iconName = 'lightbulb_outline',
     this.id,
@@ -50,29 +54,37 @@ class Project {
 
   Map<String, dynamic> toJson() => _$ProjectToJson(this);
 
-  /// Payload accepted by the Django PortfolioItem API (Tutorial 07 schema).
-  Map<String, dynamic> toApiJson() => {
-    'title': title,
-    'description': description,
-    'category': category,
-    'tech_stack': technologies.join(', '),
-    'project_url': link,
-  };
+  Map<String, dynamic> toApiJson() => toJson();
 
   factory Project.fromJson(Map<String, dynamic> json) {
     final normalized = Map<String, dynamic>.from(json);
-    if (normalized['technologies'] == null &&
-        normalized['tech_stack'] is String) {
-      normalized['technologies'] = (normalized['tech_stack'] as String)
-          .split(',')
-          .map((item) => item.trim())
-          .where((item) => item.isNotEmpty)
-          .toList();
+    if (!normalized.containsKey('tech_stack') &&
+        normalized['technologies'] != null) {
+      final technologies = normalized['technologies'];
+      normalized['tech_stack'] = technologies is List
+          ? technologies.join(', ')
+          : technologies;
     }
-    if (normalized['link'] == null) {
-      normalized['link'] = normalized['project_url'];
+    if (!normalized.containsKey('project_url') &&
+        normalized.containsKey('link')) {
+      normalized['project_url'] = normalized['link'];
     }
     normalized['id'] = normalized['id']?.toString();
     return _$ProjectFromJson(normalized);
   }
 }
+
+List<String> _technologiesFromJson(Object? value) {
+  final technologies = value is String
+      ? value.split(',')
+      : value is List
+      ? value.whereType<String>()
+      : const <String>[];
+  return technologies
+      .map((technology) => technology.trim())
+      .where((technology) => technology.isNotEmpty)
+      .toList();
+}
+
+String _technologiesToJson(List<String> technologies) =>
+    technologies.join(', ');

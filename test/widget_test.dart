@@ -24,6 +24,10 @@ void main() {
     );
     await tester.pumpWidget(MyApp(apiClient: apiClient));
     await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('login_nav_button')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('google_auth_button')), findsOneWidget);
+    expect(find.byKey(const Key('register_link_button')), findsOneWidget);
 
     await tester.enterText(
       find.byKey(const Key('login_username_field')),
@@ -72,6 +76,8 @@ void main() {
     );
     await tester.pumpWidget(MyApp(apiClient: apiClient));
     await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('login_nav_button')));
+    await tester.pumpAndSettle();
 
     await tester.enterText(
       find.byKey(const Key('login_username_field')),
@@ -85,18 +91,30 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text(MyHomePage.npm), findsOneWidget);
+    await tester.ensureVisible(find.text('Explore work'));
     await tester.tap(find.text('Explore work'));
+    await tester.pumpAndSettle();
+    expect(find.text('SELECTED WORK'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('portfolio_menu_button')));
+    await tester.pumpAndSettle();
+    await tester.drag(find.byType(ListView), const Offset(0, -500));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('manage_api_projects_button')));
     await tester.pumpAndSettle();
     expect(find.text('My projects'), findsOneWidget);
     expect(find.text('Portfolio Website'), findsOneWidget);
     tester.state<NavigatorState>(find.byType(Navigator)).pop();
     await tester.pumpAndSettle();
 
+    await tester.tap(find.byKey(const Key('portfolio_menu_button')));
+    await tester.pumpAndSettle();
+    await tester.drag(find.byType(ListView), const Offset(0, -600));
+    await tester.pumpAndSettle();
     await tester.ensureVisible(find.text('Logout'));
     await tester.tap(find.text('Logout'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Yes, leave'));
+    await tester.tap(find.text('Log out'));
     await tester.pumpAndSettle();
-    expect(find.text('Sign in to your portfolio'), findsOneWidget);
+    expect(find.byKey(const Key('login_nav_button')), findsOneWidget);
   });
 }

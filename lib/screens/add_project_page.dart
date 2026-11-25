@@ -1,7 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 
 import '../portfolio_drawer.dart';
-import '../project.dart';
+import '../models/project.dart';
 import '../services/api_client.dart';
 
 class AddProjectPage extends StatefulWidget {
