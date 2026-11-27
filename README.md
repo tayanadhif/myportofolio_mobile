@@ -1,3 +1,5 @@
+[![Flutter CI](https://github.com/tayanadhif/myportofolio_mobile/actions/workflows/main.yaml/badge.svg?branch=main)](https://github.com/tayanadhif/myportofolio_mobile/actions/workflows/main.yaml)
+
 # myportofolio_mobile
 
 Nama : Nadhif Aydin Adinandra<br>
