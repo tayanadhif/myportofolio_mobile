@@ -3,6 +3,7 @@ import 'package:material_ui/material_ui.dart';
 import '../portfolio_drawer.dart';
 import '../models/project.dart';
 import '../services/api_client.dart';
+import 'project_list_screen.dart';
 
 class AddProjectPage extends StatefulWidget {
   final bool isDarkMode;
@@ -39,6 +40,23 @@ class _AddProjectPageState extends State<AddProjectPage> {
     _technologiesController.dispose();
     _linkController.dispose();
     super.dispose();
+  }
+
+  void _openProjectList() {
+    final apiClient = widget.apiClient;
+    if (apiClient == null) return;
+
+    Navigator.pop(context);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      Navigator.push<void>(
+        context,
+        MaterialPageRoute<void>(
+          builder: (_) =>
+              ProjectListScreen(apiClient: apiClient, token: widget.token),
+        ),
+      );
+    });
   }
 
   Future<void> _submit() async {
@@ -141,6 +159,7 @@ class _AddProjectPageState extends State<AddProjectPage> {
           ),
         );
       },
+      onViewProjects: widget.apiClient == null ? null : _openProjectList,
     ),
     appBar: AppBar(
       title: const Text('Add Project'),

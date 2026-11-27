@@ -29,6 +29,55 @@ class ApiClient {
   final http.Client _client;
   Uri _uri(String path) => Uri.parse('$baseUrl$path');
 
+  Future<List<Map<String, dynamic>>> getSection(
+    String section, {
+    String? token,
+  }) async {
+    final response = await _client.get(
+      _sectionUri(section),
+      headers: _headers(token),
+    );
+    final body = _decode(response);
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw ApiException(_errorMessage(body, 'Gagal memuat $section.'));
+    }
+    final items = body is List
+        ? body
+        : body is Map<String, dynamic>
+        ? body['results'] ?? body['data']
+        : null;
+    if (items is! List) {
+      throw ApiException('Format daftar $section dari server tidak valid.');
+    }
+    if (items.any((item) => item is! Map<String, dynamic>)) {
+      throw ApiException('Format entri $section dari server tidak valid.');
+    }
+    return items
+        .cast<Map<String, dynamic>>()
+        .map((item) => Map<String, dynamic>.from(item))
+        .toList();
+  }
+
+  Future<Map<String, dynamic>> postSection(
+    String section,
+    Map<String, dynamic> data,
+    String token,
+  ) async {
+    final response = await _client.post(
+      _sectionUri(section),
+      headers: _headers(token),
+      body: jsonEncode(data),
+    );
+    final body = _decode(response);
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw ApiException(_errorMessage(body, 'Gagal menyimpan $section.'));
+    }
+    if (body is! Map<String, dynamic>) {
+      throw ApiException('Format respons $section dari server tidak valid.');
+    }
+    return body;
+  }
+
   Future<String> login(String username, String password) async {
     final response = await _client.post(
       _uri(_tokenPath),
@@ -50,37 +99,12 @@ class ApiClient {
   }
 
   Future<List<Project>> fetchProjects({String? token}) async {
-    final response = await _client.get(
-      _uri(_projectsPath),
-      headers: _headers(token),
-    );
-    final body = _decode(response);
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw ApiException(_errorMessage(body, 'Gagal memuat proyek.'));
-    }
-    final items = body is List ? body : body['results'] ?? body['data'];
-    if (items is! List) {
-      throw const ApiException('Format daftar proyek dari server tidak valid.');
-    }
-    return items
-        .whereType<Map<String, dynamic>>()
-        .map(Project.fromJson)
-        .toList();
+    final projects = await getSection('projects', token: token);
+    return projects.map(Project.fromJson).toList();
   }
 
   Future<Project> createProject(Project project, String token) async {
-    final response = await _client.post(
-      _uri(_projectsPath),
-      headers: _headers(token),
-      body: jsonEncode(project.toApiJson()),
-    );
-    final body = _decode(response);
-    if (body is! Map<String, dynamic>) {
-      throw const ApiException('Format respons proyek tidak valid.');
-    }
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw ApiException(_errorMessage(body, 'Gagal menyimpan proyek.'));
-    }
+    final body = await postSection('projects', project.toApiJson(), token);
     return Project.fromJson(body);
   }
 
@@ -99,6 +123,14 @@ class ApiClient {
     'Content-Type': 'application/json',
     if (token != null) 'Authorization': 'Token $token',
   };
+
+  Uri _sectionUri(String section) {
+    if (!RegExp(r'^[A-Za-z0-9_-]+$').hasMatch(section)) {
+      throw ArgumentError.value(section, 'section', 'Invalid API section name');
+    }
+    if (section == 'projects') return _uri(_projectsPath);
+    return _uri('/api/v1/$section/');
+  }
 
   dynamic _decode(http.Response response) {
     if (response.body.isEmpty) return <String, dynamic>{};

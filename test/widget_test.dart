@@ -6,11 +6,41 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:myportofolio_mobile/main.dart';
 import 'package:myportofolio_mobile/menu.dart';
+import 'package:myportofolio_mobile/screens/project_list_screen.dart';
 import 'package:myportofolio_mobile/services/api_client.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
+
+  testWidgets('project list refreshes from the API', (tester) async {
+    var requestCount = 0;
+    final apiClient = ApiClient(
+      client: MockClient((request) async {
+        requestCount++;
+        final title = requestCount == 1 ? 'First project' : 'Updated project';
+        return http.Response(
+          jsonEncode([
+            {'title': title, 'description': 'Project description'},
+          ]),
+          200,
+        );
+      }),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(home: ProjectListScreen(apiClient: apiClient)),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('First project'), findsOneWidget);
+
+    await tester.drag(find.byType(RefreshIndicator), const Offset(0, 400));
+    await tester.pumpAndSettle();
+
+    expect(requestCount, 2);
+    expect(find.text('Updated project'), findsOneWidget);
+    apiClient.close();
+  });
 
   testWidgets('login displays an API authentication error', (tester) async {
     final apiClient = ApiClient(
@@ -63,6 +93,7 @@ void main() {
                 'category': 'Website',
                 'tech_stack': 'Flutter, Dart',
                 'project_url': 'https://example.com',
+                'created_at': '2026-01-01',
               },
             ]),
             200,
@@ -103,6 +134,15 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('My projects'), findsOneWidget);
     expect(find.text('Portfolio Website'), findsOneWidget);
+    await tester.tap(find.text('Portfolio Website'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('project_detail_screen')), findsOneWidget);
+    await tester.drag(find.byType(ListView).last, const Offset(0, -500));
+    await tester.pumpAndSettle();
+    expect(find.text('Created At'), findsOneWidget);
+    expect(find.text('2026-01-01'), findsOneWidget);
+    tester.state<NavigatorState>(find.byType(Navigator)).pop();
+    await tester.pumpAndSettle();
     tester.state<NavigatorState>(find.byType(Navigator)).pop();
     await tester.pumpAndSettle();
 
