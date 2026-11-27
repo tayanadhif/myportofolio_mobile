@@ -10,11 +10,15 @@ class AuthState extends ChangeNotifier {
   final ApiClient apiClient;
   String? _token;
   bool _isLoading = false;
+  Future<void>? _restoreSessionFuture;
   String? get token => _token;
   bool get isAuthenticated => _token != null;
   bool get isLoading => _isLoading;
 
-  Future<void> restoreSession() async {
+  Future<void> restoreSession() =>
+      _restoreSessionFuture ??= _loadRestoredSession();
+
+  Future<void> _loadRestoredSession() async {
     final preferences = await SharedPreferences.getInstance();
     _token = preferences.getString(_tokenKey);
     notifyListeners();

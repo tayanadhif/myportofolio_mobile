@@ -39,7 +39,10 @@ class ApiClient {
     );
     final body = _decode(response);
     if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw ApiException(_errorMessage(body, 'Gagal memuat $section.'));
+      throw ApiException(
+        _errorMessage(body, 'Gagal memuat $section.'),
+        statusCode: response.statusCode,
+      );
     }
     final items = body is List
         ? body
@@ -70,7 +73,10 @@ class ApiClient {
     );
     final body = _decode(response);
     if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw ApiException(_errorMessage(body, 'Gagal menyimpan $section.'));
+      throw ApiException(
+        _errorMessage(body, 'Gagal menyimpan $section.'),
+        statusCode: response.statusCode,
+      );
     }
     if (body is! Map<String, dynamic>) {
       throw ApiException('Format respons $section dari server tidak valid.');
@@ -89,7 +95,10 @@ class ApiClient {
       throw const ApiException('Format respons login tidak valid.');
     }
     if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw ApiException(_errorMessage(body, 'Login gagal.'));
+      throw ApiException(
+        _errorMessage(body, 'Login gagal.'),
+        statusCode: response.statusCode,
+      );
     }
     final token = body['token'] ?? body['key'];
     if (token is! String || token.isEmpty) {
@@ -114,7 +123,10 @@ class ApiClient {
       headers: _headers(token),
     );
     if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw ApiException('Logout server gagal (${response.statusCode}).');
+      throw ApiException(
+        'Logout server gagal (${response.statusCode}).',
+        statusCode: response.statusCode,
+      );
     }
   }
 
@@ -137,7 +149,10 @@ class ApiClient {
     try {
       return jsonDecode(response.body);
     } on FormatException {
-      throw const ApiException('Respons server bukan JSON yang valid.');
+      throw ApiException(
+        'Respons server bukan JSON yang valid.',
+        statusCode: response.statusCode,
+      );
     }
   }
 
@@ -153,8 +168,9 @@ class ApiClient {
 }
 
 class ApiException implements Exception {
-  const ApiException(this.message);
+  const ApiException(this.message, {this.statusCode});
   final String message;
+  final int? statusCode;
   @override
   String toString() => message;
 }

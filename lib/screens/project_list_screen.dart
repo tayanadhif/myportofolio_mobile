@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../models/project.dart';
 import '../services/api_client.dart';
+import '../services/auth_guard.dart';
 import 'add_project_page.dart';
 import 'project_detail_screen.dart';
 
@@ -39,11 +40,11 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
   }
 
   Future<void> _addProject() async {
+    if (!await ensureLoggedIn(context) || !mounted) return;
     final savedProject = await Navigator.push<Project>(
       context,
       MaterialPageRoute<Project>(
-        builder: (_) =>
-            AddProjectPage(apiClient: widget.apiClient, token: widget.token),
+        builder: (_) => AddProjectPage(apiClient: widget.apiClient),
       ),
     );
     if (savedProject != null) _reload();

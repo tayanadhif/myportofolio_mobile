@@ -2,7 +2,7 @@ import 'package:material_ui/material_ui.dart';
 
 class LoginScreen extends StatefulWidget {
   final bool isDarkMode;
-  final VoidCallback onThemeToggle;
+  final VoidCallback? onThemeToggle;
   final Future<void> Function(String username, String password) onLoginSuccess;
   final VoidCallback? onRegister;
   final VoidCallback? onGoogleSignIn;
@@ -10,7 +10,7 @@ class LoginScreen extends StatefulWidget {
   const LoginScreen({
     super.key,
     required this.isDarkMode,
-    required this.onThemeToggle,
+    this.onThemeToggle,
     required this.onLoginSuccess,
     this.onRegister,
     this.onGoogleSignIn,
@@ -46,7 +46,7 @@ class _LoginScreenState extends State<LoginScreen> {
         _usernameController.text.trim(),
         _passwordController.text,
       );
-      if (mounted) Navigator.pop(context);
+      if (mounted) Navigator.pop(context, true);
     } catch (error) {
       if (mounted) setState(() => _error = error.toString());
     } finally {
@@ -63,15 +63,19 @@ class _LoginScreenState extends State<LoginScreen> {
         title: const Text('Portfolio Sign In'),
         backgroundColor: colorScheme.surface,
         surfaceTintColor: Colors.transparent,
-        actions: [
-          IconButton(
-            tooltip: widget.isDarkMode
-                ? 'Enable light mode'
-                : 'Enable dark mode',
-            onPressed: widget.onThemeToggle,
-            icon: Icon(widget.isDarkMode ? Icons.light_mode : Icons.dark_mode),
-          ),
-        ],
+        actions: widget.onThemeToggle == null
+            ? null
+            : [
+                IconButton(
+                  tooltip: widget.isDarkMode
+                      ? 'Enable light mode'
+                      : 'Enable dark mode',
+                  onPressed: widget.onThemeToggle,
+                  icon: Icon(
+                    widget.isDarkMode ? Icons.light_mode : Icons.dark_mode,
+                  ),
+                ),
+              ],
       ),
       body: SafeArea(
         child: Center(

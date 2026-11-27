@@ -1,22 +1,23 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:provider/provider.dart';
 
 import '../portfolio_drawer.dart';
 import '../models/project.dart';
 import '../services/api_client.dart';
+import '../services/auth_guard.dart';
+import '../services/auth_state.dart';
 import 'project_list_screen.dart';
 
 class AddProjectPage extends StatefulWidget {
   final bool isDarkMode;
   final VoidCallback? onThemeToggle;
-  final ApiClient? apiClient;
-  final String? token;
+  final ApiClient apiClient;
 
   const AddProjectPage({
     super.key,
+    required this.apiClient,
     this.isDarkMode = false,
     this.onThemeToggle,
-    this.apiClient,
-    this.token,
   });
 
   @override
@@ -31,7 +32,6 @@ class _AddProjectPageState extends State<AddProjectPage> {
   final _linkController = TextEditingController();
   String _category = 'Other';
   bool _isSaving = false;
-  String? _saveError;
 
   @override
   void dispose() {
@@ -43,17 +43,17 @@ class _AddProjectPageState extends State<AddProjectPage> {
   }
 
   void _openProjectList() {
-    final apiClient = widget.apiClient;
-    if (apiClient == null) return;
-
+    final authState = context.read<AuthState>();
     Navigator.pop(context);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       Navigator.push<void>(
         context,
         MaterialPageRoute<void>(
-          builder: (_) =>
-              ProjectListScreen(apiClient: apiClient, token: widget.token),
+          builder: (_) => ProjectListScreen(
+            apiClient: widget.apiClient,
+            token: authState.token,
+          ),
         ),
       );
     });
@@ -61,6 +61,12 @@ class _AddProjectPageState extends State<AddProjectPage> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
+    final authState = context.read<AuthState>();
+    if (!await ensureLoggedIn(context) || !mounted) return;
+    final token = authState.token;
+    if (token == null) {
+      throw StateError('Authentication completed without an API token.');
+    }
 
     final technologies = _technologiesController.text
         .split(',')
@@ -76,19 +82,23 @@ class _AddProjectPageState extends State<AddProjectPage> {
       link: link,
     );
 
-    if (widget.apiClient != null && widget.token != null) {
-      setState(() {
-        _isSaving = true;
-        _saveError = null;
-      });
-      try {
-        await widget.apiClient!.createProject(project, widget.token!);
-      } catch (error) {
-        if (mounted) setState(() => _saveError = error.toString());
-        return;
-      } finally {
-        if (mounted) setState(() => _isSaving = false);
+    setState(() => _isSaving = true);
+    late final Project savedProject;
+    try {
+      savedProject = await widget.apiClient.createProject(project, token);
+    } on ApiException catch (error) {
+      if (error.statusCode == 401) {
+        await authState.logout();
       }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(error.message)));
+      if (error.statusCode == 401) {
+        await ensureLoggedIn(context);
+      }
+      return;
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
     }
     if (!mounted) return;
 
@@ -119,9 +129,7 @@ class _AddProjectPageState extends State<AddProjectPage> {
           FilledButton(
             onPressed: () {
               Navigator.pop(dialogContext);
-              if (widget.apiClient != null) {
-                Navigator.pop(context, project);
-              }
+              Navigator.pop(context, savedProject);
             },
             child: const Text('Close'),
           ),
@@ -146,20 +154,25 @@ class _AddProjectPageState extends State<AddProjectPage> {
         Navigator.popUntil(context, (route) => route.isFirst);
       },
       onAddProject: () {
+        final navigator = Navigator.of(context);
         Navigator.pop(context);
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (_) => AddProjectPage(
-              isDarkMode: widget.isDarkMode,
-              onThemeToggle: widget.onThemeToggle,
-              apiClient: widget.apiClient,
-              token: widget.token,
+        WidgetsBinding.instance.addPostFrameCallback((_) async {
+          if (!mounted) return;
+          final loggedIn = await ensureLoggedIn(context);
+          if (!loggedIn) return;
+          if (!mounted) return;
+          navigator.pushReplacement(
+            MaterialPageRoute(
+              builder: (_) => AddProjectPage(
+                isDarkMode: widget.isDarkMode,
+                onThemeToggle: widget.onThemeToggle,
+                apiClient: widget.apiClient,
+              ),
             ),
-          ),
-        );
+          );
+        });
       },
-      onViewProjects: widget.apiClient == null ? null : _openProjectList,
+      onViewProjects: _openProjectList,
     ),
     appBar: AppBar(
       title: const Text('Add Project'),
@@ -320,16 +333,6 @@ class _AddProjectPageState extends State<AddProjectPage> {
                     ],
                   ),
                 ),
-                if (_saveError != null)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Text(
-                      _saveError!,
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.error,
-                      ),
-                    ),
-                  ),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
                   child: SizedBox(

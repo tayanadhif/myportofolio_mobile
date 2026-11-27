@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../models/project.dart';
 import '../services/auth_state.dart';
+import '../services/auth_guard.dart';
 import '../screens/add_project_page.dart';
 import '../screens/login_screen.dart';
 import '../screens/project_list_screen.dart';
@@ -129,10 +130,7 @@ class _MyHomePageState extends State<MyHomePage> {
   );
 
   Future<void> _openAddProject() async {
-    if (!widget.authState.isAuthenticated) {
-      _openLogin();
-      return;
-    }
+    if (!await ensureLoggedIn(context) || !mounted) return;
     final project = await Navigator.push<Project>(
       context,
       MaterialPageRoute(
@@ -140,7 +138,6 @@ class _MyHomePageState extends State<MyHomePage> {
           isDarkMode: widget.isDarkMode,
           onThemeToggle: widget.onThemeToggle,
           apiClient: widget.authState.apiClient,
-          token: widget.authState.token,
         ),
       ),
     );
