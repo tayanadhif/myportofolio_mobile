@@ -6,21 +6,43 @@ Nama : Nadhif Aydin Adinandra<br>
 NPM : 2506537745<br>
 Kelas : PBP E
 
-A new Flutter project.
-
 ## Getting Started
 
-This project is a starting point for a Flutter application.
+### Prerequisites
 
-A few resources to get you started if this is your first Flutter project:
+- Flutter SDK stable dan Android emulator atau perangkat Android.
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+### Backend dan API
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+- Repositori backend Django: [tayanadhif/myportofolio](https://github.com/tayanadhif/myportofolio)
+- API proyek yang telah di-deploy: [GET /api/v1/projects/](https://nadhif-aydin-myportofolio.pws.cs.ui.ac.id/api/v1/projects/)
+
+`API_BASE_URL` adalah origin backend; path endpoint ditambahkan oleh `ApiClient`.
+Untuk Android Emulator, nilai default-nya `http://10.0.2.2:8000`. Gunakan URL
+deployment di bawah untuk mengambil data dari API publik.
+
+### Menjalankan aplikasi
+
+```shell
+flutter pub get
+dart run build_runner build --delete-conflicting-outputs
+flutter run --dart-define=API_BASE_URL=https://nadhif-aydin-myportofolio.pws.cs.ui.ac.id
+```
+
+`build_runner` membuat `*.g.dart` dari model JSON. Jalankan kembali setelah
+mengubah anotasi atau model yang menggunakan code generation.
+
+> **Catatan autentikasi:** aplikasi mengirim login ke `/api-token-auth/`, tetapi
+> endpoint deployment tersebut saat ini merespons 404. Kode backend yang
+> dipublikasikan juga membatasi endpoint proyek ke `SessionAuthentication`.
+> Karena itu, daftar proyek publik dapat diverifikasi melalui tautan API di atas,
+> tetapi alur login dan pembuatan proyek dengan token belum dapat diklaim
+> terverifikasi end-to-end sampai backend menyediakan endpoint dan autentikasi
+> token yang sesuai.
+
+Dokumentasi Flutter: [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter),
+[codelab](https://docs.flutter.dev/get-started/codelab), dan
+[referensi](https://docs.flutter.dev/reference/learning-resources).
 
 ### Tugas 7
 
@@ -123,7 +145,21 @@ samples, guidance on mobile development, and a full API reference.
 
 ### Tugas 9
 
-Model `Project` di `lib/models/project.dart` menggunakan `@JsonSerializable(fieldRename: FieldRename.snake)` untuk menyesuaikan JSON dengan serializer DRF (`tech_stack` dan `project_url`). Field opsional memiliki nilai default, sedangkan `id` dari server tidak disertakan dalam JSON request. Jalankan `dart run build_runner build --delete-conflicting-outputs` untuk membuat `project.g.dart`; berkas `*.g.dart` diabaikan Git dan analyzer.
+1. **Mengapa kita menggunakan `@JsonSerializable(fieldRename: FieldRename.snake)` dan `@JsonKey(includeToJson: false)` alih-alih mengirim objek `Map<String, dynamic>` mentah langsung dari *widget*? Jelaskan satu *bug* yang dicegah atau dapat dicegah oleh pendekatan ini pada model bagianmu.**
+
+   `@JsonSerializable(fieldRename: FieldRename.snake)` membuat konversi nama field Dart ke JSON konsisten dengan API, sedangkan `@JsonKey(name: ...)` menangani nama khusus seperti `technologies` menjadi `tech_stack` dan `link` menjadi `project_url`. Serialisasi yang dihasilkan juga terpusat dan bertipe di model `Project`, bukan dirakit manual di *widget*. `@JsonKey(includeToJson: false)` mencegah field yang bukan bagian dari request ikut terkirim; misalnya, `id` ditetapkan server dan `iconName` hanya untuk tampilan. Salah satu bug yang dicegah adalah payload memakai key yang keliru, seperti `technologies` alih-alih `tech_stack`, sehingga backend tidak menerima nilai tech stack yang dimaksud. Pemetaan pada model memastikan nama field konsisten dan `id` server tidak ikut dikirim saat membuat proyek.
+
+2. **Mengapa `Future` yang diteruskan ke `FutureBuilder` harus diinisialisasi di dalam `initState()` alih-alih langsung di dalam `build()`, dan mengapa `ApiClient` sebaiknya melempar `ApiException` daripada mengembalikan `null` pada respons HTTP non-2xx?**
+
+   `ProjectListScreen` menyimpan Future proyek di `initState()` agar Future yang sama digunakan pada rebuild. Jika Future baru dibuat di `build()`, setiap rebuild bisa memulai request ulang dan mengembalikan tampilan ke keadaan loading. Untuk respons HTTP non-2xx, `ApiClient` melempar `ApiException` agar `FutureBuilder` dapat membedakan dan menampilkan kegagalan secara eksplisit. Mengembalikan `null` akan mencampuradukkan kegagalan server dengan respons kosong yang sah dan dapat menyembunyikan penyebab masalah.
+
+3. **Bandingkan `SessionAuthentication` milik Django (dari Tutorial 04/07) dengan `TokenAuthentication` milik DRF (dari Tutorial 10). Mengapa `myportfolio_mobile` menggunakan `TokenAuthentication` sementara `SessionAuthentication` tetap diaktifkan pada *backend* Django?**
+
+   `SessionAuthentication` mengidentifikasi pengguna melalui sesi/cookie Django, cocok untuk website yang berjalan dalam konteks browser dan menggunakan perlindungan CSRF untuk request yang mengubah data. Aplikasi mobile menggunakan `TokenAuthentication`: setelah login, aplikasi mengirim token secara eksplisit pada header `Authorization: Token <token>`, tanpa bergantung pada cookie sesi browser. Keduanya dapat diaktifkan pada backend untuk melayani jenis client berbeda; aplikasi mobile memilih token, sementara website atau alat berbasis browser tetap dapat memakai sesi. Pada konfigurasi backend yang dipublikasikan saat ini, endpoint login `/api-token-auth/` belum tersedia dan endpoint proyek menetapkan `SessionAuthentication` saja. Karena itu, pengambilan daftar proyek publik dapat diperiksa melalui URL API di atas, tetapi alur login dan pembuatan proyek mobile berbasis token belum terverifikasi end-to-end.
+
+4. **Jelaskan peran *job* `build` (`very_good_workflows`) dan `build_apk` dalam *pipeline* `.github/workflows/main.yaml` milikmu (termasuk pemeriksaan apa saja yang dijalankan `very_good_workflows` di balik layar). Mengapa berkas `*.g.dart` dimasukkan ke `.gitignore` meskipun CI membutuhkannya untuk menganalisis dan membangun aplikasi?**
+
+   Job `build` memanggil reusable workflow `very_good_workflows`. Workflow tersebut mengambil kode, menyiapkan Flutter, mengunduh dependency dengan Very Good CLI, menjalankan perintah `setup` yang membuat berkas hasil `build_runner`, memeriksa format dengan `dart format`, menjalankan `flutter analyze`, lalu menjalankan tes beserta laporan coverage melalui `very_good test`. Pada konfigurasi ini Bloc lint dinonaktifkan dan ambang minimum coverage adalah 0%. Job `build_apk` hanya berjalan setelah `build` berhasil. Karena setiap job memiliki runner yang terpisah, job ini mengunduh dependency dan menghasilkan ulang berkas `*.g.dart`, kemudian membangun APK release dengan `API_BASE_URL` deployment dan mengunggahnya sebagai artefak `app-release-apk`. Berkas `*.g.dart` diabaikan Git karena merupakan keluaran yang dapat dibuat ulang dari model dan anotasi; CI tetap memilikinya karena setiap job menjalankan generator sebelum analyze atau build.
 
 ### AI Disclosure
 
@@ -132,6 +168,8 @@ Saya menggunakan ChatGPT sebagai alat bantu untuk memperoleh panduan dan langkah
 Pada Tugas 7, AI digunakan untuk membantu memahami widget tree, `StatelessWidget` dan `StatefulWidget`, `BuildContext`, serta konsep hot reload dan hot restart, sekaligus membantu menyusun jawaban reflektif Tugas 7. Seluruh hasil ditinjau dan disesuaikan dengan implementasi proyek sebelum digunakan.
 
 Pada Tugas 8, AI digunakan untuk membantu menyusun navigasi dengan `Navigator`, menjaga konsistensi `Scaffold`/`Drawer`, merancang validasi formulir dan dialog ringkasan, serta menyusun jawaban reflektif dalam README. Seluruh hasil ditinjau, disesuaikan, dan diuji pada proyek sebelum digunakan.
+
+Pada Tugas 9, AI digunakan untuk membantu menjelaskan serialisasi JSON, penanganan Future dan error API, pilihan autentikasi client, serta pemeriksaan dan artefak pada GitHub Actions. Saya meninjau penjelasan berdasarkan implementasi aplikasi dan konfigurasi workflow, serta mencantumkan keterbatasan integrasi backend yang diketahui.
 
 **ChatGPT history conversation:**
 - [Percakapan Tugas 7](https://chatgpt.com/share/6af335f7-93d4-83ec-b2ab-4db9846f2165)

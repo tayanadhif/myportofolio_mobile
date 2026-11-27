@@ -7,7 +7,7 @@ on:
     branches: [main, master]
 
 jobs:
-  flutter:
+  build:
     uses: VeryGoodOpenSource/very_good_workflows/.github/workflows/flutter_package.yml@v1
     with:
       flutter_channel: stable
@@ -15,6 +15,33 @@ jobs:
       analyze_directories: lib
       run_bloc_lint: false
       min_coverage: 0
-      setup: flutter build apk --release
-      artifact_name: app-release-apk
-      artifact_paths: build/app/outputs/flutter-apk/app-release.apk
+      setup: dart run build_runner build --delete-conflicting-outputs
+
+  build_apk:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2.23.0
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Generate JSON serialization code
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Build release APK
+        run: flutter build apk --release --dart-define=API_BASE_URL=https://nadhif-aydin-myportofolio.pws.cs.ui.ac.id
+
+      - name: Upload release APK
+        uses: actions/upload-artifact@v7
+        with:
+          name: app-release-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: error
