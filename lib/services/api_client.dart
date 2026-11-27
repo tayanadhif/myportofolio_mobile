@@ -17,6 +17,10 @@ class ApiClient {
     'API_TOKEN_PATH',
     defaultValue: '/api-token-auth/',
   );
+  static const _registerPath = String.fromEnvironment(
+    'API_REGISTER_PATH',
+    defaultValue: '/api/v1/auth/register/',
+  );
   static const _googleTokenPath = String.fromEnvironment(
     'API_GOOGLE_TOKEN_PATH',
     defaultValue: '/api/v1/auth/google/',
@@ -111,6 +115,41 @@ class ApiClient {
     return token;
   }
 
+  Future<String> register({
+    required String fullName,
+    required String username,
+    required String email,
+    required String password,
+    required String passwordConfirmation,
+  }) async {
+    final response = await _client.post(
+      _uri(_registerPath),
+      headers: const {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'full_name': fullName,
+        'username': username,
+        'email': email,
+        'password1': password,
+        'password2': passwordConfirmation,
+      }),
+    );
+    final body = _decode(response);
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw ApiException(
+        _errorMessage(body, 'Registrasi gagal.'),
+        statusCode: response.statusCode,
+      );
+    }
+    if (body is! Map<String, dynamic>) {
+      throw const ApiException('Format respons registrasi tidak valid.');
+    }
+    final token = body['token'] ?? body['key'];
+    if (token is! String || token.isEmpty) {
+      throw const ApiException('Respons registrasi tidak berisi token.');
+    }
+    return token;
+  }
+
   Future<String> loginWithGoogle(String idToken) async {
     final response = await _client.post(
       _uri(_googleTokenPath),
@@ -191,6 +230,15 @@ class ApiClient {
     final detail = body['detail'] ?? body['error'] ?? body['non_field_errors'];
     if (detail is List && detail.isNotEmpty) return detail.join(' ');
     if (detail is String && detail.isNotEmpty) return detail;
+    for (final entry in body.entries) {
+      final errors = entry.value;
+      if (errors is List && errors.isNotEmpty) {
+        return '${entry.key}: ${errors.join(' ')}';
+      }
+      if (errors is String && errors.isNotEmpty) {
+        return '${entry.key}: $errors';
+      }
+    }
     return fallback;
   }
 

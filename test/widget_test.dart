@@ -87,7 +87,8 @@ void main() {
     await tester.tap(find.byKey(const Key('google_auth_button')));
     await tester.pumpAndSettle();
 
-    expect(find.text('Add Project'), findsOneWidget);
+    expect(find.text(MyHomePage.npm), findsOneWidget);
+    expect(find.text('Portfolio Sign In'), findsNothing);
   });
 
   testWidgets('login displays an API authentication error', (tester) async {
@@ -119,6 +120,63 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Invalid username or password.'), findsOneWidget);
+  });
+
+  testWidgets('registration stays in app and returns home authenticated', (
+    tester,
+  ) async {
+    final apiClient = ApiClient(
+      client: MockClient((request) async {
+        expect(request.method, 'POST');
+        expect(request.url.path, '/api/v1/auth/register/');
+        expect(jsonDecode(request.body), {
+          'full_name': 'Mobile Test User',
+          'username': 'mobile_test_user',
+          'email': 'mobile-test@example.com',
+          'password1': 'Correct-Horse-Battery-17!',
+          'password2': 'Correct-Horse-Battery-17!',
+        });
+        return http.Response(
+          jsonEncode({'token': 'registration-api-token'}),
+          201,
+        );
+      }),
+    );
+    await tester.pumpWidget(MyApp(apiClient: apiClient));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('register_nav_button')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Create your account'), findsOneWidget);
+    await tester.enterText(
+      find.byKey(const Key('register_full_name_field')),
+      'Mobile Test User',
+    );
+    await tester.enterText(
+      find.byKey(const Key('register_username_field')),
+      'mobile_test_user',
+    );
+    await tester.enterText(
+      find.byKey(const Key('register_email_field')),
+      'mobile-test@example.com',
+    );
+    await tester.enterText(
+      find.byKey(const Key('register_password_field')),
+      'Correct-Horse-Battery-17!',
+    );
+    await tester.enterText(
+      find.byKey(const Key('register_password_confirmation_field')),
+      'Correct-Horse-Battery-17!',
+    );
+    await tester.ensureVisible(find.byKey(const Key('register_submit_button')));
+    await tester.tap(find.byKey(const Key('register_submit_button')));
+    await tester.pumpAndSettle();
+
+    expect(find.text(MyHomePage.npm), findsOneWidget);
+    expect(find.byKey(const Key('register_nav_button')), findsNothing);
+    expect(find.byKey(const Key('login_nav_button')), findsNothing);
+    expect(find.text('Create your account'), findsNothing);
+    apiClient.close();
   });
 
   testWidgets('Google login exchanges a native ID token with Django', (
@@ -157,6 +215,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text(MyHomePage.npm), findsOneWidget);
+    expect(find.text('Portfolio Sign In'), findsNothing);
     apiClient.close();
   });
 
@@ -215,6 +274,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text(MyHomePage.npm), findsOneWidget);
+    expect(find.text('Portfolio Sign In'), findsNothing);
     await tester.ensureVisible(find.text('Explore work'));
     await tester.tap(find.text('Explore work'));
     await tester.pumpAndSettle();

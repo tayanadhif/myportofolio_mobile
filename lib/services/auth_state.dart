@@ -41,6 +41,31 @@ class AuthState extends ChangeNotifier {
     }
   }
 
+  Future<void> register({
+    required String fullName,
+    required String username,
+    required String email,
+    required String password,
+    required String passwordConfirmation,
+  }) async {
+    _isLoading = true;
+    notifyListeners();
+    try {
+      _token = await apiClient.register(
+        fullName: fullName,
+        username: username,
+        email: email,
+        password: password,
+        passwordConfirmation: passwordConfirmation,
+      );
+      final preferences = await SharedPreferences.getInstance();
+      await preferences.setString(_tokenKey, _token!);
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
   Future<bool> loginWithGoogle() async {
     _isLoading = true;
     notifyListeners();

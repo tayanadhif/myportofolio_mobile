@@ -35,7 +35,7 @@ Untuk mencoba Google Sign-In native, pilih emulator atau perangkat Android/iOS s
 
 Google Sign-In menggunakan native account chooser di aplikasi, lalu mengirim Google ID token ke endpoint backend `/api/v1/auth/google/` untuk ditukar menjadi DRF API token. Buat OAuth Client ID tipe **Android** di Google Cloud Console dengan package name `com.example.myportofolio_mobile` dan SHA-1 sertifikat debug/release yang dipakai. Buat juga OAuth Client ID tipe **Web application**; gunakan ID Web yang sama sebagai `GOOGLE_OAUTH_WEB_CLIENT_ID` saat menjalankan aplikasi dan `GOOGLE_OAUTH_CLIENT_ID` pada environment backend. Client ID bukan secret, tetapi `GOOGLE_OAUTH_CLIENT_SECRET` tetap hanya disimpan di environment server dan tidak boleh dimasukkan ke aplikasi.
 
-Backend perlu memasang dependency `google-auth`, mengaktifkan `rest_framework.authtoken`, dan menjalankan migrasi sebelum menerima login mobile. Perubahan backend lokal belum dideploy; API deployment saat ini belum menyediakan endpoint Google-token tersebut, jadi login Google end-to-end melalui deployment baru berfungsi setelah backend diperbarui dan dikonfigurasi.
+Registrasi di aplikasi memakai `POST /api/v1/auth/register/`. Jika berhasil, backend mengembalikan DRF token agar aplikasi langsung masuk dan kembali ke beranda. Backend perlu mengaktifkan `rest_framework.authtoken` dan menjalankan migrasi. Endpoint registrasi dan Google login yang ditambahkan di backend lokal belum dideploy; keduanya baru berfungsi dengan API publik setelah backend diperbarui dan dikonfigurasi.
 
 Untuk iOS, daftarkan OAuth Client ID tipe iOS dan tambahkan URL scheme `REVERSED_CLIENT_ID` dari Google ke `ios/Runner/Info.plist`. Jalankan aplikasi dengan `--dart-define=GOOGLE_OAUTH_IOS_CLIENT_ID=<iOS client ID>`.
 

@@ -8,6 +8,7 @@ import '../services/auth_guard.dart';
 import '../screens/add_project_page.dart';
 import '../screens/login_screen.dart';
 import '../screens/project_list_screen.dart';
+import '../screens/register_screen.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({
@@ -121,9 +122,13 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  void _openRegister() => _launchExternal(
-    'https://nadhif-aydin-myportofolio.pws.cs.ui.ac.id/register/',
-  );
+  void _openRegister() {
+    Navigator.of(context).push<void>(
+      MaterialPageRoute(
+        builder: (_) => RegisterScreen(onRegister: widget.authState.register),
+      ),
+    );
+  }
 
   Future<void> _openAddProject() async {
     if (!await ensureLoggedIn(context) || !mounted) return;

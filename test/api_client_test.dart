@@ -69,4 +69,37 @@ void main() {
     );
     apiClient.close();
   });
+
+  test('registration creates an account and returns its API token', () async {
+    final apiClient = ApiClient(
+      client: MockClient((request) async {
+        expect(request.method, 'POST');
+        expect(request.url.path, '/api/v1/auth/register/');
+        expect(request.headers['Content-Type'], 'application/json');
+        expect(jsonDecode(request.body), {
+          'full_name': 'Mobile User',
+          'username': 'mobile-user',
+          'email': 'mobile@example.com',
+          'password1': 'correct-horse-battery-17',
+          'password2': 'correct-horse-battery-17',
+        });
+        return http.Response(
+          jsonEncode({'token': 'registration-api-token'}),
+          201,
+        );
+      }),
+    );
+
+    expect(
+      await apiClient.register(
+        fullName: 'Mobile User',
+        username: 'mobile-user',
+        email: 'mobile@example.com',
+        password: 'correct-horse-battery-17',
+        passwordConfirmation: 'correct-horse-battery-17',
+      ),
+      'registration-api-token',
+    );
+    apiClient.close();
+  });
 }

@@ -46,7 +46,9 @@ class _LoginScreenState extends State<LoginScreen> {
         _usernameController.text.trim(),
         _passwordController.text,
       );
-      if (mounted) Navigator.pop(context, true);
+      if (mounted) {
+        Navigator.of(context).popUntil((route) => route.isFirst);
+      }
     } catch (error) {
       if (mounted) setState(() => _error = error.toString());
     } finally {
@@ -64,7 +66,7 @@ class _LoginScreenState extends State<LoginScreen> {
     });
     try {
       if (await onGoogleSignIn() && mounted) {
-        Navigator.pop(context, true);
+        Navigator.of(context).popUntil((route) => route.isFirst);
       }
     } catch (error) {
       if (mounted) setState(() => _error = error.toString());
