@@ -136,3 +136,4 @@ Pada Tugas 8, AI digunakan untuk membantu menyusun navigasi dengan `Navigator`, 
 **ChatGPT history conversation:**
 - [Percakapan Tugas 7](https://chatgpt.com/share/6af335f7-93d4-83ec-b2ab-4db9846f2165)
 - [Percakapan Tugas 8](https://chatgpt.com/share/6affa934-8bb8-83ec-9aff-afb6260e53a9)
+- [Percakapan Tugas 9](https://chatgpt.com/share/6b08f6b5-7ff0-83ec-87b1-6179d2230e70)
