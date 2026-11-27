@@ -17,6 +17,10 @@ class ApiClient {
     'API_TOKEN_PATH',
     defaultValue: '/api-token-auth/',
   );
+  static const _googleTokenPath = String.fromEnvironment(
+    'API_GOOGLE_TOKEN_PATH',
+    defaultValue: '/api/v1/auth/google/',
+  );
   static const _projectsPath = String.fromEnvironment(
     'API_PROJECTS_PATH',
     defaultValue: '/api/v1/projects/',
@@ -103,6 +107,32 @@ class ApiClient {
     final token = body['token'] ?? body['key'];
     if (token is! String || token.isEmpty) {
       throw const ApiException('Respons login tidak berisi token.');
+    }
+    return token;
+  }
+
+  Future<String> loginWithGoogle(String idToken) async {
+    final response = await _client.post(
+      _uri(_googleTokenPath),
+      headers: const {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({'id_token': idToken}),
+    );
+    final body = _decode(response);
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw ApiException(
+        _errorMessage(body, 'Google Sign-In gagal.'),
+        statusCode: response.statusCode,
+      );
+    }
+    if (body is! Map<String, dynamic>) {
+      throw const ApiException('Format respons Google login tidak valid.');
+    }
+    final token = body['token'] ?? body['key'];
+    if (token is! String || token.isEmpty) {
+      throw const ApiException('Respons Google login tidak berisi token.');
     }
     return token;
   }

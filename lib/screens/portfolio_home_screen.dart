@@ -115,7 +115,7 @@ class _MyHomePageState extends State<MyHomePage> {
           onThemeToggle: widget.onThemeToggle,
           onLoginSuccess: widget.authState.login,
           onRegister: _openRegister,
-          onGoogleSignIn: _openGoogleSignIn,
+          onGoogleSignIn: widget.authState.loginWithGoogle,
         ),
       ),
     );
@@ -123,10 +123,6 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void _openRegister() => _launchExternal(
     'https://nadhif-aydin-myportofolio.pws.cs.ui.ac.id/register/',
-  );
-
-  void _openGoogleSignIn() => _launchExternal(
-    'https://nadhif-aydin-myportofolio.pws.cs.ui.ac.id/accounts/google/login/',
   );
 
   Future<void> _openAddProject() async {

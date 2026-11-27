@@ -26,19 +26,18 @@ deployment di bawah untuk mengambil data dari API publik.
 ```shell
 flutter pub get
 dart run build_runner build --delete-conflicting-outputs
-flutter run --dart-define=API_BASE_URL=https://nadhif-aydin-myportofolio.pws.cs.ui.ac.id
+flutter run --dart-define=API_BASE_URL=https://nadhif-aydin-myportofolio.pws.cs.ui.ac.id --dart-define=GOOGLE_OAUTH_WEB_CLIENT_ID=your-web-oauth-client-id
 ```
 
-`build_runner` membuat `*.g.dart` dari model JSON. Jalankan kembali setelah
-mengubah anotasi atau model yang menggunakan code generation.
+Untuk mencoba Google Sign-In native, pilih emulator atau perangkat Android/iOS sebagai target. Cek ID perangkat dengan `flutter devices`, lalu tambahkan `-d <device-id>` pada perintah `flutter run`. Google Sign-In native di aplikasi ini tidak mendukung target Chrome atau Windows.
 
-> **Catatan autentikasi:** aplikasi mengirim login ke `/api-token-auth/`, tetapi
-> endpoint deployment tersebut saat ini merespons 404. Kode backend yang
-> dipublikasikan juga membatasi endpoint proyek ke `SessionAuthentication`.
-> Karena itu, daftar proyek publik dapat diverifikasi melalui tautan API di atas,
-> tetapi alur login dan pembuatan proyek dengan token belum dapat diklaim
-> terverifikasi end-to-end sampai backend menyediakan endpoint dan autentikasi
-> token yang sesuai.
+`build_runner` membuat `*.g.dart` dari model JSON. Jalankan kembali setelah mengubah anotasi atau model yang menggunakan code generation.
+
+Google Sign-In menggunakan native account chooser di aplikasi, lalu mengirim Google ID token ke endpoint backend `/api/v1/auth/google/` untuk ditukar menjadi DRF API token. Buat OAuth Client ID tipe **Android** di Google Cloud Console dengan package name `com.example.myportofolio_mobile` dan SHA-1 sertifikat debug/release yang dipakai. Buat juga OAuth Client ID tipe **Web application**; gunakan ID Web yang sama sebagai `GOOGLE_OAUTH_WEB_CLIENT_ID` saat menjalankan aplikasi dan `GOOGLE_OAUTH_CLIENT_ID` pada environment backend. Client ID bukan secret, tetapi `GOOGLE_OAUTH_CLIENT_SECRET` tetap hanya disimpan di environment server dan tidak boleh dimasukkan ke aplikasi.
+
+Backend perlu memasang dependency `google-auth`, mengaktifkan `rest_framework.authtoken`, dan menjalankan migrasi sebelum menerima login mobile. Perubahan backend lokal belum dideploy; API deployment saat ini belum menyediakan endpoint Google-token tersebut, jadi login Google end-to-end melalui deployment baru berfungsi setelah backend diperbarui dan dikonfigurasi.
+
+Untuk iOS, daftarkan OAuth Client ID tipe iOS dan tambahkan URL scheme `REVERSED_CLIENT_ID` dari Google ke `ios/Runner/Info.plist`. Jalankan aplikasi dengan `--dart-define=GOOGLE_OAUTH_IOS_CLIENT_ID=<iOS client ID>`.
 
 Dokumentasi Flutter: [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter),
 [codelab](https://docs.flutter.dev/get-started/codelab), dan
@@ -170,6 +169,8 @@ Pada Tugas 7, AI digunakan untuk membantu memahami widget tree, `StatelessWidget
 Pada Tugas 8, AI digunakan untuk membantu menyusun navigasi dengan `Navigator`, menjaga konsistensi `Scaffold`/`Drawer`, merancang validasi formulir dan dialog ringkasan, serta menyusun jawaban reflektif dalam README. Seluruh hasil ditinjau, disesuaikan, dan diuji pada proyek sebelum digunakan.
 
 Pada Tugas 9, AI digunakan untuk membantu menjelaskan serialisasi JSON, penanganan Future dan error API, pilihan autentikasi client, serta pemeriksaan dan artefak pada GitHub Actions. Saya meninjau penjelasan berdasarkan implementasi aplikasi dan konfigurasi workflow, serta mencantumkan keterbatasan integrasi backend yang diketahui.
+
+Pada integrasi Google Sign-In, AI digunakan untuk membantu menyiapkan alur native di aplikasi dan endpoint backend untuk memverifikasi Google ID token. Implementasi ditinjau dan diuji secara lokal; kredensial OAuth dan deployment backend tetap perlu dikonfigurasi agar autentikasi nyata dapat digunakan.
 
 **ChatGPT history conversation:**
 - [Percakapan Tugas 7](https://chatgpt.com/share/6af335f7-93d4-83ec-b2ab-4db9846f2165)

@@ -49,4 +49,24 @@ void main() {
     );
     apiClient.close();
   });
+
+  test('Google login exchanges an ID token for a DRF API token', () async {
+    final apiClient = ApiClient(
+      client: MockClient((request) async {
+        expect(request.method, 'POST');
+        expect(request.url.path, '/api/v1/auth/google/');
+        expect(request.headers['Content-Type'], 'application/json');
+        expect(jsonDecode(request.body), {
+          'id_token': 'signed-google-id-token',
+        });
+        return http.Response(jsonEncode({'token': 'api-token'}), 200);
+      }),
+    );
+
+    expect(
+      await apiClient.loginWithGoogle('signed-google-id-token'),
+      'api-token',
+    );
+    apiClient.close();
+  });
 }

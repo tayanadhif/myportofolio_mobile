@@ -5,7 +5,7 @@ class LoginScreen extends StatefulWidget {
   final VoidCallback? onThemeToggle;
   final Future<void> Function(String username, String password) onLoginSuccess;
   final VoidCallback? onRegister;
-  final VoidCallback? onGoogleSignIn;
+  final Future<bool> Function()? onGoogleSignIn;
 
   const LoginScreen({
     super.key,
@@ -47,6 +47,25 @@ class _LoginScreenState extends State<LoginScreen> {
         _passwordController.text,
       );
       if (mounted) Navigator.pop(context, true);
+    } catch (error) {
+      if (mounted) setState(() => _error = error.toString());
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _signInWithGoogle() async {
+    final onGoogleSignIn = widget.onGoogleSignIn;
+    if (onGoogleSignIn == null || _isLoading) return;
+
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+    try {
+      if (await onGoogleSignIn() && mounted) {
+        Navigator.pop(context, true);
+      }
     } catch (error) {
       if (mounted) setState(() => _error = error.toString());
     } finally {
@@ -191,7 +210,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       const SizedBox(height: 16),
                       OutlinedButton.icon(
                         key: const Key('google_auth_button'),
-                        onPressed: widget.onGoogleSignIn,
+                        onPressed: _isLoading ? null : _signInWithGoogle,
                         style: OutlinedButton.styleFrom(
                           minimumSize: const Size.fromHeight(52),
                           side: BorderSide(color: colorScheme.outline),
@@ -208,8 +227,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Google authentication opens the portfolio website. '
-                        'It does not create an API token in this app.',
+                        'Google authentication runs in this app and exchanges '
+                        'a verified Google ID token for an API token.',
                         textAlign: TextAlign.center,
                         style: Theme.of(context).textTheme.labelSmall
                             ?.copyWith(color: colorScheme.onSurfaceVariant),

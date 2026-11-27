@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:myportofolio_mobile/menu.dart';
 import 'package:myportofolio_mobile/services/api_client.dart';
 import 'package:myportofolio_mobile/services/auth_state.dart';
+import 'package:myportofolio_mobile/services/google_sign_in_service.dart';
 
 void main() {
   runApp(const MyApp());
@@ -13,8 +14,9 @@ void main() {
 
 class MyApp extends StatefulWidget {
   final ApiClient? apiClient;
+  final GoogleIdentityProvider? googleIdentityProvider;
 
-  const MyApp({super.key, this.apiClient});
+  const MyApp({super.key, this.apiClient, this.googleIdentityProvider});
 
   @override
   State<MyApp> createState() => _MyAppState();
@@ -27,7 +29,10 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
-    _authState = AuthState(widget.apiClient ?? ApiClient());
+    _authState = AuthState(
+      widget.apiClient ?? ApiClient(),
+      googleIdentityProvider: widget.googleIdentityProvider,
+    );
     unawaited(_authState.restoreSession());
   }
 

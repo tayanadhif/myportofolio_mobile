@@ -8,7 +8,20 @@ import 'package:myportofolio_mobile/main.dart';
 import 'package:myportofolio_mobile/menu.dart';
 import 'package:myportofolio_mobile/screens/project_list_screen.dart';
 import 'package:myportofolio_mobile/services/api_client.dart';
+import 'package:myportofolio_mobile/services/google_sign_in_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+class _FakeGoogleIdentityProvider implements GoogleIdentityProvider {
+  _FakeGoogleIdentityProvider(this.idToken);
+
+  final String? idToken;
+
+  @override
+  Future<String?> signIn() async => idToken;
+
+  @override
+  Future<void> signOut() async {}
+}
 
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
@@ -47,12 +60,20 @@ void main() {
   ) async {
     final apiClient = ApiClient(
       client: MockClient((request) async {
-        expect(request.url.path, '/api-token-auth/');
+        expect(request.url.path, '/api/v1/auth/google/');
+        expect(jsonDecode(request.body), {'id_token': 'guard-google-id-token'});
         return http.Response(jsonEncode({'token': 'test-token'}), 200);
       }),
     );
 
-    await tester.pumpWidget(MyApp(apiClient: apiClient));
+    await tester.pumpWidget(
+      MyApp(
+        apiClient: apiClient,
+        googleIdentityProvider: _FakeGoogleIdentityProvider(
+          'guard-google-id-token',
+        ),
+      ),
+    );
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('portfolio_menu_button')));
     await tester.pumpAndSettle();
@@ -62,15 +83,8 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Portfolio Sign In'), findsOneWidget);
 
-    await tester.enterText(
-      find.byKey(const Key('login_username_field')),
-      'nadhif',
-    );
-    await tester.enterText(
-      find.byKey(const Key('login_password_field')),
-      'password',
-    );
-    await tester.tap(find.byKey(const Key('login_button')));
+    await tester.ensureVisible(find.byKey(const Key('google_auth_button')));
+    await tester.tap(find.byKey(const Key('google_auth_button')));
     await tester.pumpAndSettle();
 
     expect(find.text('Add Project'), findsOneWidget);
@@ -105,6 +119,45 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Invalid username or password.'), findsOneWidget);
+  });
+
+  testWidgets('Google login exchanges a native ID token with Django', (
+    tester,
+  ) async {
+    final apiClient = ApiClient(
+      client: MockClient((request) async {
+        if (request.url.path == '/api/v1/auth/google/') {
+          expect(request.method, 'POST');
+          expect(jsonDecode(request.body), {
+            'id_token': 'native-google-id-token',
+          });
+          return http.Response(jsonEncode({'token': 'google-api-token'}), 200);
+        }
+        if (request.url.path == '/api/v1/projects/') {
+          expect(request.headers['Authorization'], 'Token google-api-token');
+          return http.Response('[]', 200);
+        }
+        return http.Response('Not found', 404);
+      }),
+    );
+
+    await tester.pumpWidget(
+      MyApp(
+        apiClient: apiClient,
+        googleIdentityProvider: _FakeGoogleIdentityProvider(
+          'native-google-id-token',
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('login_nav_button')));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byKey(const Key('google_auth_button')));
+    await tester.tap(find.byKey(const Key('google_auth_button')));
+    await tester.pumpAndSettle();
+
+    expect(find.text(MyHomePage.npm), findsOneWidget);
+    apiClient.close();
   });
 
   testWidgets('token login opens the portfolio and loads API projects', (

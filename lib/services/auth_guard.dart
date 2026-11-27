@@ -14,8 +14,11 @@ Future<bool> ensureLoggedIn(BuildContext context) async {
 
   final loggedIn = await navigator.push<bool>(
     MaterialPageRoute<bool>(
-      builder: (_) =>
-          LoginScreen(isDarkMode: isDarkMode, onLoginSuccess: authState.login),
+      builder: (_) => LoginScreen(
+        isDarkMode: isDarkMode,
+        onLoginSuccess: authState.login,
+        onGoogleSignIn: authState.loginWithGoogle,
+      ),
     ),
   );
   return loggedIn == true && authState.isAuthenticated;
